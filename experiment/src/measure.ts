@@ -1,11 +1,18 @@
-import { createPublicClient, createWalletClient, http } from "viem";
+import { createPublicClient, createWalletClient, http, type Hex } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-import { formatMon, declaredExposureWei, reductionPct, type TxGas } from "@reservoir/shared";
+import {
+  formatMon,
+  declaredExposureWei,
+  reductionPct,
+  claimGasLimit,
+  PERFORM_GAS_LIMIT,
+  type TxGas,
+} from "@reservoir/shared";
+import { coordinatorAbi } from "@reservoir/shared/abis";
 import { deployExecutor, reserve, perform } from "@reservoir/keeper/executor";
 import { deployFixtures, resolveKeys, chainFor } from "./fixtures.js";
 
-const CLAIM_GAS = 130_000n;
-const PERFORM_GAS = 500_000n;
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 export interface Measurement {
   chainId: number;
@@ -37,9 +44,30 @@ export async function runMeasure(rpc: string, chainId: number): Promise<Measurem
     walletClient: createWalletClient({ account, chain, transport }),
   };
 
+  const CLAIM_GAS = claimGasLimit(chainId);
+  const PERFORM_GAS = PERFORM_GAS_LIMIT;
+
   const executor = await deployExecutor(clients, "aave", fx.coordinator, account.address, [fx.coordPool]);
+
+  // Monad executes blocks asynchronously, so a just-mined state change may not yet be
+  // reflected. Confirm the subject actually reads eligible before racing the claim.
+  const isEligible = () =>
+    clients.publicClient.readContract({
+      address: fx.coordinator,
+      abi: coordinatorAbi,
+      functionName: "isEligible",
+      args: [fx.taskId, fx.subject],
+    }) as Promise<boolean>;
+  for (let i = 0; i < 20 && !(await isEligible()); i++) await sleep(500);
+  if (!(await isEligible())) throw new Error("subject never became eligible");
+
   const claimTx = await reserve(clients, executor, fx.taskId, fx.subject, fx.bondWei, CLAIM_GAS);
-  if (claimTx.receipt.status !== "success") throw new Error("measurement claim reverted");
+  if (claimTx.receipt.status !== "success") {
+    throw new Error(
+      `measurement claim reverted (gasUsed ${claimTx.receipt.gasUsed} / declared ${CLAIM_GAS}; ` +
+        `on Monad a revert is charged the full declared limit — inspect with 'cast run ${claimTx.hash}')`,
+    );
+  }
   const performTx = await perform(clients, executor, fx.taskId, fx.subject, "0x", PERFORM_GAS);
   if (performTx.receipt.status !== "success") throw new Error("measurement liquidation reverted");
 

@@ -116,13 +116,30 @@ why keepers declare 500k. The Ethereum counterfactual (gas *used*, reverts refun
 coordination costs slightly **more** there — the saving is specific to Monad's declared-limit
 accounting, which is the whole thesis.
 
-_Monad testnet figures: run the commands above and paste the numbers here._
+### Monad testnet (measured)
+
+Deployed and measured on Monad testnet (chainId 10143). Coordinator:
+[`0x376ffecB62143019323bD02d832903ac05fA78C7`](https://testnet.monadexplorer.com/address/0x376ffecB62143019323bD02d832903ac05fA78C7).
+Raw output: [`reports/monad-measure.json`](./reports/monad-measure.json).
 
 | metric (Monad testnet) | value |
 | --- | --- |
-| gas price | _tbd_ |
-| claim gas used / declared | _tbd_ |
-| liquidation gas used / declared | _tbd_ |
-| modeled declared-limit reduction | _tbd_ |
+| gas price | 102 gwei |
+| claim — charged / actual compute | **200,000** / ~113k (declared limit is billed) |
+| liquidation — charged / actual compute | **500,000** / ~113k (declared limit is billed) |
+| modeled 4-keeper naive exposure | 0.204 MON |
+| modeled 4-keeper coordinated exposure | 0.1326 MON |
+| **declared-limit reduction** | **35%** |
+
+**The thesis, confirmed on-chain.** A *successful* liquidation that computes in ~113k of EVM
+gas (per a `cast run` replay) was billed the full **500,000** declared limit; a claim declared
+at 130k/150k *ran out* — Monad's live metering for this multi-contract path is higher than a
+local EVM's, so the claim is declared at 200k and billed 200k. On Monad you pay the limit you
+declare, win or lose — which is exactly why moving contention onto the cheap claim wins.
+
+The four-keeper race itself needs four funded accounts; the single-key `measure` above needs
+only one. On anvil (free accounts) the full race shows ~49%; the tighter Monad number (35%)
+reflects the larger claim limit its metering requires — still a third of the gas, honestly
+reported.
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md) for the git/PR conventions.

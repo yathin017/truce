@@ -1,0 +1,11 @@
+{
+  "chainId": 10143,
+  "claimGasUsed": "200000",
+  "claimGasDeclared": "200000",
+  "liquidationGasUsed": "500000",
+  "liquidationGasDeclared": "500000",
+  "gasPriceWei": "102000000000",
+  "modeledNaiveDeclaredWei": "204000000000000000",
+  "modeledCoordinatedDeclaredWei": "132600000000000000",
+  "modeledDeclaredReductionPct": 35
+}

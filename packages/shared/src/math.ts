@@ -3,6 +3,19 @@ import { formatEther } from "viem";
 /** 1e18 fixed-point scale (WAD). */
 export const WAD = 10n ** 18n;
 
+/** Declared gas limit for the expensive execution (a real liquidation's success path). */
+export const PERFORM_GAS_LIMIT = 500_000n;
+
+/**
+ * Declared gas limit for the cheap claim. The claim computes in ~113k of EVM gas, but
+ * Monad's live metering runs materially higher for this multi-contract cold-access path
+ * (a 150k-declared claim runs out on testnet; 200k succeeds), so it needs more headroom
+ * there. Still far below {@link PERFORM_GAS_LIMIT} — that gap is the product.
+ */
+export function claimGasLimit(chainId: number): bigint {
+  return chainId === 10143 ? 200_000n : 130_000n;
+}
+
 /**
  * Health factor, 1e18-scaled.
  * HF = collateralValue * liquidationThreshold / debtValue.
