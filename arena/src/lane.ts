@@ -86,17 +86,14 @@ function naiveCall(lane: LaneWorld): { abi: Abi; fn: string; args: unknown[]; ro
 }
 
 /**
- * Naive round: every bot fires the expensive action directly; one lands, the rest revert.
- * The declared limit is a live estimate of the success path (all keepers would declare the
- * same success-sized limit), taken while the opportunity is live — before any bot consumes it.
+ * Estimate the success-path work once, while the opportunity is live (before any bot consumes
+ * it). This single number seeds both the naive limits and the coordinated execution limit — they
+ * perform the same work — so the two sides can never invert just because one estimate fell back.
  */
-async function runNaive(arena: Arena, lane: LaneWorld, spend: Spend): Promise<TxRecord[]> {
+async function estimateWorkRaw(arena: Arena, lane: LaneWorld): Promise<bigint> {
   const { abi, fn, args, role } = naiveCall(lane);
-  const explorer = arena.cfg.explorerBase;
   const first = arena.botClients[0]!;
-
-  // One estimate of the success path; each bot pads it by its own margin (distinct limits).
-  const raw = await estimateRaw(role, arena.cfg.chainId, {
+  return estimateRaw(role, arena.cfg.chainId, {
     publicClient: first.publicClient,
     account: first.account,
     address: lane.naiveTarget,
@@ -104,7 +101,16 @@ async function runNaive(arena: Arena, lane: LaneWorld, spend: Spend): Promise<Tx
     functionName: fn,
     args,
   });
-  const limits = perBotLimits(raw, role, arena.cfg.chainId, arena.cfg.gasFactor, arena.botClients.length);
+}
+
+/**
+ * Naive round: every bot fires the expensive action directly; one lands, the rest revert.
+ * Each bot pads the shared work estimate by its own margin (distinct, realistic limits).
+ */
+async function runNaive(arena: Arena, lane: LaneWorld, workRaw: bigint, spend: Spend): Promise<TxRecord[]> {
+  const { abi, fn, args, role } = naiveCall(lane);
+  const explorer = arena.cfg.explorerBase;
+  const limits = perBotLimits(workRaw, role, arena.cfg.chainId, arena.cfg.gasFactor, arena.botClients.length);
 
   const results = await Promise.allSettled(
     arena.botClients.map((bot, i) =>
@@ -123,8 +129,16 @@ async function runNaive(arena: Arena, lane: LaneWorld, spend: Spend): Promise<Tx
   return txs;
 }
 
-/** Coordinated round: every bot fires the cheap claim; the winner executes. */
-async function runCoordinated(arena: Arena, lane: LaneWorld, spend: Spend): Promise<TxRecord[]> {
+/**
+ * Coordinated round: every bot fires the cheap claim; the winner executes using the same
+ * success-path estimate that sized the naive race.
+ */
+async function runCoordinated(
+  arena: Arena,
+  lane: LaneWorld,
+  workRaw: bigint,
+  spend: Spend,
+): Promise<TxRecord[]> {
   const explorer = arena.cfg.explorerBase;
   const bond = await bondOf(arena, lane);
   const first = arena.botClients[0]!;
@@ -168,18 +182,10 @@ async function runCoordinated(arena: Arena, lane: LaneWorld, spend: Spend): Prom
   }
   if (winner < 0) return txs; // nobody won (shouldn't happen after reset)
 
-  // The winner now holds the claim, so `perform` is simulatable — estimate the execution live,
-  // padded by the winning bot's own margin.
-  const performRaw = await estimateRaw("execute", arena.cfg.chainId, {
-    publicClient: arena.botClients[winner]!.publicClient,
-    account: arena.botClients[winner]!.account,
-    address: lane.executors[winner]!,
-    abi: baseExecutorAbi as Abi,
-    functionName: "perform",
-    args: [lane.taskId, lane.subject, "0x"],
-  });
+  // The direct call and `perform` contain the same expensive work. Reusing the estimate keeps
+  // the comparison stable when Monad's `eth_estimateGas` intermittently fails on one side.
   const performGas = declaredFromRaw(
-    performRaw,
+    workRaw,
     botFactor(arena.cfg.gasFactor, winner),
     floorFor("execute", arena.cfg.chainId),
   );
@@ -227,8 +233,9 @@ export async function runLaneRound(arena: Arena, laneId: LaneId, roundId: number
   const lane = arena.world.lanes[laneId];
   await reset(arena, lane, spend);
 
-  const naiveTxs = await runNaive(arena, lane, spend);
-  const coordTxs = await runCoordinated(arena, lane, spend);
+  const workRaw = await estimateWorkRaw(arena, lane);
+  const naiveTxs = await runNaive(arena, lane, workRaw, spend);
+  const coordTxs = await runCoordinated(arena, lane, workRaw, spend);
 
   const naive: SideResult = { txs: naiveTxs, ...summarize(naiveTxs) };
   const coordinated: SideResult = { txs: coordTxs, ...summarize(coordTxs) };
