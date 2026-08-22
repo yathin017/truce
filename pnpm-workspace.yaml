@@ -1,5 +1,6 @@
 packages:
   - "keeper"
   - "experiment"
+  - "arena"
   - "web"
   - "packages/*"
