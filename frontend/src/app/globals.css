@@ -1,0 +1,400 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ------------------------------------------------------------------ */
+/* Token surface — utilities resolve through vars so themes re-scope.  */
+/* ------------------------------------------------------------------ */
+@theme inline {
+  --color-canvas: var(--canvas);
+  --color-panel: var(--panel);
+  --color-surface: var(--surface);
+  --color-elevated: var(--elevated);
+
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+
+  --color-accent: var(--accent);
+  --color-accent-hi: var(--accent-hi);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-fg: var(--accent-fg);
+
+  --color-ok: var(--ok);
+  --color-warn: var(--warn);
+  --color-bad: var(--bad);
+
+  --color-ok-soft: var(--ok-soft);
+  --color-warn-soft: var(--warn-soft);
+  --color-bad-soft: var(--bad-soft);
+
+  --font-sans: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, "SF Mono", Menlo, monospace;
+  --font-display: var(--font-unbounded), var(--font-archivo), ui-sans-serif, sans-serif;
+}
+
+/* Light — lab spec-sheet: warm paper, dark ink, saturated signals. */
+:root {
+  --canvas: #f2f1ed;
+  --panel: #fbfbf9;
+  --surface: #f6f5f2;
+  --elevated: #ffffff;
+
+  --line: #e0ded7;
+  --line-strong: #c6c3b9;
+
+  --fg: #14161a;
+  --muted: #565b64;
+  --faint: #868b94;
+
+  --accent: #2743d8;
+  --accent-hi: #1c33ad;
+  --accent-soft: #e5e8fb;
+  --accent-fg: #ffffff;
+
+  --ok: #0f7d52;
+  --warn: #9a6508;
+  --bad: #bf1f2c;
+
+  --ok-soft: #e0f2e9;
+  --warn-soft: #f8eed7;
+  --bad-soft: #fbe4e5;
+
+  --shadow-panel: 0 1px 2px rgba(20, 22, 26, 0.05);
+  --texture: rgba(20, 22, 26, 0.045);
+}
+
+/* Dark — unlit instrument bay. */
+.dark {
+  --canvas: #08090c;
+  --panel: #0c0e12;
+  --surface: #101319;
+  --elevated: #161a21;
+
+  --line: #1c202a;
+  --line-strong: #2b313d;
+
+  --fg: #f1f3f7;
+  --muted: #98a0ad;
+  --faint: #646c79;
+
+  --accent: #5b85ff;
+  --accent-hi: #8faaff;
+  --accent-soft: #141c33;
+  --accent-fg: #060911;
+
+  --ok: #34d399;
+  --warn: #f2b23c;
+  --bad: #f4606b;
+
+  --ok-soft: #0d2620;
+  --warn-soft: #2a2011;
+  --bad-soft: #2c1418;
+
+  --shadow-panel: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --texture: rgba(255, 255, 255, 0.03);
+}
+
+@layer base {
+  * {
+    border-color: var(--line);
+  }
+
+  html {
+    color-scheme: light;
+    -webkit-font-smoothing: antialiased;
+    /* Guide: the page body must never scroll horizontally. */
+    overflow-x: clip;
+  }
+
+  html.dark {
+    color-scheme: dark;
+  }
+
+  body {
+    background-color: var(--canvas);
+    color: var(--fg);
+    font-family: var(--font-sans);
+    overflow-x: clip;
+  }
+
+  /* Instrument panel: every numeral is monospace and tabular. */
+  .font-mono,
+  code,
+  pre,
+  th,
+  [data-numeric] {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "zero" 1;
+  }
+
+  ::selection {
+    background: var(--accent-soft);
+    color: var(--fg);
+  }
+
+  ::-webkit-scrollbar {
+    width: 11px;
+    height: 11px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--line-strong);
+    border: 3px solid var(--canvas);
+    border-radius: 999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--faint);
+  }
+
+  /* Kill number-input spinners — these are instrument readouts. */
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button {
+    appearance: none;
+    margin: 0;
+  }
+  input[type="number"] {
+    -moz-appearance: textfield;
+  }
+}
+
+@layer components {
+  .label-micro {
+    font-size: 10px;
+    line-height: 1;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--faint);
+    font-weight: 600;
+    font-family: var(--font-mono);
+  }
+
+  .panel {
+    background-color: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    box-shadow: var(--shadow-panel);
+  }
+
+  /* Engineering grid — hero surfaces only. */
+  .grid-texture {
+    background-image:
+      linear-gradient(to right, var(--texture) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--texture) 1px, transparent 1px);
+    background-size: 28px 28px;
+  }
+
+  /* Ruler ticks under gas bars — the instrument signature. */
+  .tick-rule {
+    background-image: repeating-linear-gradient(
+      to right,
+      var(--line-strong) 0 1px,
+      transparent 1px 100%
+    );
+    background-size: 10% 100%;
+  }
+
+  .tick-rule-fine {
+    background-image: repeating-linear-gradient(
+      to right,
+      var(--line) 0 1px,
+      transparent 1px 100%
+    );
+    background-size: 2.5% 100%;
+  }
+
+  /* Tables scroll inside their own container, never the page. */
+  .table-scroll {
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+  }
+}
+
+@keyframes truce-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(0.82);
+  }
+}
+
+@keyframes truce-sweep {
+  from {
+    transform: translateX(-110%);
+  }
+  to {
+    transform: translateX(220%);
+  }
+}
+
+@keyframes truce-alarm {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Landing hero — one 6.5s loop, every element keyed to the same clock. */
+/* Only opacity / transform / stroke-dashoffset animate, so both themes */
+/* stay correct without hardcoding a single colour.                     */
+/* ------------------------------------------------------------------ */
+
+/* Four keepers race toward the coordinator. */
+@keyframes truce-inbound {
+  0%,
+  2% {
+    stroke-dashoffset: 0;
+    opacity: 0;
+  }
+  5% {
+    opacity: 1;
+  }
+  24% {
+    stroke-dashoffset: -100;
+    opacity: 1;
+  }
+  27%,
+  100% {
+    stroke-dashoffset: -100;
+    opacity: 0;
+  }
+}
+
+/* Exactly one leaves. */
+@keyframes truce-outbound {
+  0%,
+  34% {
+    stroke-dashoffset: 0;
+    opacity: 0;
+  }
+  37% {
+    opacity: 1;
+  }
+  56% {
+    stroke-dashoffset: -100;
+    opacity: 1;
+  }
+  59%,
+  100% {
+    stroke-dashoffset: -100;
+    opacity: 0;
+  }
+}
+
+/* The moment rights are awarded. */
+@keyframes truce-gate {
+  0%,
+  22% {
+    opacity: 0;
+  }
+  26% {
+    opacity: 1;
+  }
+  34%,
+  88% {
+    opacity: 0.4;
+  }
+  96%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* Won / stood-down state on the keeper nodes. */
+@keyframes truce-state {
+  0%,
+  26% {
+    opacity: 0;
+  }
+  31%,
+  88% {
+    opacity: 1;
+  }
+  96%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes truce-arrive {
+  0%,
+  54% {
+    opacity: 0;
+    transform: scale(0.82);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+  66% {
+    transform: scale(1);
+  }
+  88% {
+    opacity: 1;
+  }
+  96%,
+  100% {
+    opacity: 0;
+    transform: scale(1);
+  }
+}
+
+@keyframes truce-letter {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 0.24em, 0) scaleY(0.82);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes truce-rule-in {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes truce-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* SVG needs an explicit box before transform-origin means anything. */
+.svg-center {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
