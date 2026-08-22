@@ -3,7 +3,7 @@ import { privateKeyToAccount } from "viem/accounts";
 import type { TxGas } from "@reservoir/shared";
 import { deployExecutor, reserve, perform } from "@reservoir/keeper/executor";
 import { loadArtifact } from "@reservoir/keeper/artifacts";
-import { KEYS, DEMO_USER, type Fixtures } from "./fixtures.js";
+import { DEMO_USER, type Fixtures } from "./fixtures.js";
 
 const CLAIM_GAS = 130_000n; // tight cheap-claim limit
 const PERFORM_GAS = 500_000n; // real liquidation success-path limit
@@ -14,13 +14,13 @@ export interface RoundResult {
   winner: number; // keeper index, or -1
 }
 
-function keeperClients(rpc: string, chain: Fixtures["chain"]) {
-  const transport = http(rpc);
-  const publicClient = createPublicClient({ chain, transport });
-  return KEYS.keepers.map((pk) => {
+function keeperClients(fx: Fixtures) {
+  const transport = http(fx.rpc);
+  const publicClient = createPublicClient({ chain: fx.chain, transport });
+  return fx.keeperKeys.map((pk) => {
     const account = privateKeyToAccount(pk);
-    const walletClient = createWalletClient({ account, chain, transport });
-    return { chain, account, publicClient, walletClient };
+    const walletClient = createWalletClient({ account, chain: fx.chain, transport });
+    return { chain: fx.chain, account, publicClient, walletClient };
   });
 }
 
@@ -34,7 +34,7 @@ function toGas(receipt: { gasUsed: bigint; effectiveGasPrice: bigint }, declared
  * "already liquidated" — but on Monad every one of them is billed its full declared limit.
  */
 export async function runNaive(fx: Fixtures): Promise<RoundResult> {
-  const keepers = keeperClients(fx.rpc, fx.chain);
+  const keepers = keeperClients(fx);
   const { abi } = loadArtifact("EnforcedMockPool");
   const txs: TxGas[] = [];
   let winner = -1;
@@ -69,7 +69,7 @@ export async function runNaive(fx: Fixtures): Promise<RoundResult> {
  * the 500k liquidation; the three losers paid only their tight claim limit and stood down.
  */
 export async function runCoordinated(fx: Fixtures): Promise<RoundResult> {
-  const keepers = keeperClients(fx.rpc, fx.chain);
+  const keepers = keeperClients(fx);
   const executors: Address[] = [];
   for (const k of keepers) {
     executors.push(await deployExecutor(k, "aave", fx.coordinator, k.account.address, [fx.coordPool]));
