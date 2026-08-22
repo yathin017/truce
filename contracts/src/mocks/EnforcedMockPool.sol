@@ -5,6 +5,7 @@ import {ICoordinator} from "../interfaces/ICoordinator.sol";
 import {IAavePoolLike} from "../interfaces/IAavePoolLike.sol";
 import {MockOracle} from "./MockOracle.sol";
 import {ClaimEnforced} from "./ClaimEnforced.sol";
+import {GasSim} from "../lib/GasSim.sol";
 
 /// @notice A minimal, Aave-V3-compatible lending market used as the honest demo device.
 ///         `liquidate` is the expensive path, gated on the caller holding a live claim —
@@ -15,7 +16,12 @@ contract EnforcedMockPool is ClaimEnforced, IAavePoolLike {
     uint256 public constant LIQUIDATION_THRESHOLD = 0.85e18;
     uint256 internal constant WAD = 1e18;
 
+    /// @notice Gas a real liquidation would burn (flash loan + swap + seize). Consumed on the
+    ///         success path so the mock is a faithful, dynamically-estimable stand-in.
+    uint256 public constant WORK_GAS = 420_000;
+
     MockOracle public immutable oracle;
+    uint256 private _gasSink;
 
     struct Position {
         uint256 collateral; // collateral token amount (1e18)
@@ -86,6 +92,8 @@ contract EnforcedMockPool is ClaimEnforced, IAavePoolLike {
         Position storage p = positions[user];
         require(!p.liquidated, "already liquidated");
         require(healthFactor(user) < WAD, "position healthy");
+        // Losers revert above; only the winner reaches the expensive work.
+        _gasSink = GasSim.spin(WORK_GAS, _gasSink);
         p.liquidated = true;
         emit PositionLiquidated(user, msg.sender);
     }

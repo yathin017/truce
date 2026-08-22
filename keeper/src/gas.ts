@@ -1,5 +1,5 @@
-import type { TxGas } from "@reservoir/shared";
-import { declaredExposureWei, usedCostWei, formatMon } from "@reservoir/shared";
+import type { TxGas } from "@truce/shared";
+import { declaredExposureWei, usedCostWei, formatMon } from "@truce/shared";
 
 export type TxKind = "claim" | "perform";
 

@@ -9,7 +9,7 @@ import {
   type WalletClient,
 } from "viem";
 import type { Account } from "viem/accounts";
-import { loadArtifact } from "@reservoir/keeper/artifacts";
+import { loadArtifact } from "@truce/keeper/artifacts";
 import type { ArenaConfig } from "./config.js";
 
 export interface BotClients {

@@ -1,5 +1,5 @@
 {
-  "name": "@reservoir/experiment",
+  "name": "@truce/experiment",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -8,8 +8,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@reservoir/shared": "workspace:*",
-    "@reservoir/keeper": "workspace:*",
+    "@truce/shared": "workspace:*",
+    "@truce/keeper": "workspace:*",
     "dotenv": "^16.4.7",
     "viem": "^2.21.55"
   },

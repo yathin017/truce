@@ -1,4 +1,4 @@
-# Reservoir keeper — example config. Run a keeper without writing code.
+# Truce keeper — example config. Run a keeper without writing code.
 #   pnpm --filter @reservoir/keeper dev run --config keeper.example.yml
 
 rpc: http://127.0.0.1:8545

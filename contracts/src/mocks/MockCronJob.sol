@@ -4,6 +4,7 @@ pragma solidity ^0.8.24;
 import {ICoordinator} from "../interfaces/ICoordinator.sol";
 import {IHarvestable} from "../interfaces/IAavePoolLike.sol";
 import {ClaimEnforced} from "./ClaimEnforced.sol";
+import {GasSim} from "../lib/GasSim.sol";
 
 /// @notice A demo upkeep job that becomes due every `interval` seconds. `harvest()` is the
 ///         expensive, once-per-interval action: it reverts until the interval has elapsed —
@@ -12,9 +13,15 @@ import {ClaimEnforced} from "./ClaimEnforced.sol";
 ///         no arbitrage value coordinate identically.
 /// @dev    Subject for the predicate and the claim gate is this job's own address.
 contract MockCronJob is ClaimEnforced, IHarvestable {
+    /// @notice Gas a real upkeep (compound / rebalance) would burn — consumed on the success
+    ///         path so the mock is a faithful, dynamically-estimable stand-in. Lighter than a
+    ///         liquidation, as upkeeps usually are.
+    uint256 public constant WORK_GAS = 180_000;
+
     uint256 public interval;
     uint256 public lastHarvest;
     uint256 public harvestCount;
+    uint256 private _gasSink;
 
     event Harvested(address indexed caller, uint256 timestamp, uint256 count);
     event PushedDue();
@@ -43,6 +50,7 @@ contract MockCronJob is ClaimEnforced, IHarvestable {
     /// @notice The expensive action, enforced + once-per-interval.
     function harvest() external onlyHolder(subject()) {
         require(due(), "not due");
+        _gasSink = GasSim.spin(WORK_GAS, _gasSink);
         lastHarvest = block.timestamp;
         harvestCount++;
         emit Harvested(msg.sender, block.timestamp, harvestCount);

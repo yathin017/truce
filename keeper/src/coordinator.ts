@@ -1,5 +1,5 @@
 import { pad, type Address, type Hex } from "viem";
-import { coordinatorAbi } from "@reservoir/shared/abis";
+import { coordinatorAbi } from "@truce/shared/abis";
 import type { Clients } from "./clients.js";
 
 export const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000" as const;

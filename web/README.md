@@ -1,8 +1,37 @@
-# web (Phase B)
+# @reservoir/web
 
-Next.js + wagmi/viem + Tailwind console. **Deferred to Phase B** — this package is a stub for now.
+The Truce console — a Next.js frontend that explains the Monad gas-billing problem and shows
+the [arena](../arena) running live: two side-by-side columns, real transactions, clickable
+explorer links, and the mean gas saved.
 
-Planned screens: `/tasks` marketplace · `/tasks/[id]` detail · `/register` · `/keeper` console · `/experiment`.
+## Design
 
-Backend (contracts + keeper + experiment) is built and frozen first so the frontend is a thin client
-over stable ABIs (`packages/shared`).
+Warm editorial paper + ink, a validated rust (`#C4551D`, waste) / green (`#118A64`, efficient)
+data palette — deliberately not the generic AI blue/violet. System fonts, tabular monospace
+numbers, hairline Swiss grid. Colour is only ever an accent; identity always carries a ✓/✗ and a
+label too.
+
+## Run
+
+```bash
+# 1. start the arena (see ../arena) — e.g. on Monad testnet:
+DEPLOYER_PRIVATE_KEY=0x… pnpm --filter @reservoir/arena serve --chain 10143 --auto
+
+# 2. start the console
+pnpm --filter @reservoir/web dev        # http://localhost:3000
+```
+
+Point it at a different arena with `NEXT_PUBLIC_ARENA_URL` (default `http://localhost:8787`).
+If the arena is down, the page still renders with a clear "arena offline" banner.
+
+## Structure
+
+```
+app/            layout + page (renders <Console/>)
+components/      Nav · Hero · HowItWorks · Arena · LaneColumns · TxRow · GasCompare · BurnMeter · Footer
+lib/arena.ts     useArena() — REST snapshot + WS live feed
+lib/types.ts     arena API shapes (mirrored from arena/README.md)
+lib/format.ts    MON / gas / hash formatting
+```
+
+It consumes only the arena HTTP+WS API — no coupling to the arena or contract code.

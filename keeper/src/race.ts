@@ -10,8 +10,8 @@ import {
   claimGasLimit,
   PERFORM_GAS_LIMIT,
   type TxGas,
-} from "@reservoir/shared";
-import { coordinatorAbi } from "@reservoir/shared/abis";
+} from "@truce/shared";
+import { coordinatorAbi } from "@truce/shared/abis";
 import { chainFor } from "./clients.js";
 import { deployExecutor, reserve, perform } from "./executor.js";
 import { Logger } from "./log.js";

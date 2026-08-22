@@ -8,8 +8,8 @@ import {
   type Hex,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-import { anvil, monadTestnet } from "@reservoir/shared";
-import { loadArtifact } from "@reservoir/keeper/artifacts";
+import { anvil, monadTestnet } from "@truce/shared";
+import { loadArtifact } from "@truce/keeper/artifacts";
 
 /** Anvil well-known keys: account 0 deploys/seeds, accounts 1-4 are the racing keepers. */
 const ANVIL_KEYS = {

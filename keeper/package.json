@@ -1,5 +1,5 @@
 {
-  "name": "@reservoir/keeper",
+  "name": "@truce/keeper",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -18,7 +18,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@reservoir/shared": "workspace:*",
+    "@truce/shared": "workspace:*",
     "dotenv": "^16.4.7",
     "viem": "^2.21.55",
     "yaml": "^2.6.1"

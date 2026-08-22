@@ -23,6 +23,19 @@ export const mockArbPoolAbi = [
   },
   {
     "type": "function",
+    "name": "WORK_GAS",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "admin",
     "inputs": [],
     "outputs": [

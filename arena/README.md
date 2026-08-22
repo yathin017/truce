@@ -1,7 +1,7 @@
 # @reservoir/arena
 
 A live demo engine: bots continuously execute the same opportunity **naively** (directly, the
-world today) and **via Reservoir** (cheap claim → winner executes), side by side, so the
+world today) and **via Truce** (cheap claim → winner executes), side by side, so the
 frontend can show real-time gas savings with real on-chain tx hashes.
 
 Three use cases run on one coordinator — **liquidation**, **DEX arbitrage**, **cron/harvest** —
@@ -122,8 +122,8 @@ Base: `http://localhost:8787` (override with `ARENA_PORT`). CORS is open.
 ## Suggested frontend layout
 
 - Header: big **mean % saved** (`overall.meanSavingsPct`), gas price, budget remaining, auto toggle.
-- Tabs per lane (liquidation / arb / cron). Each tab: two columns — *Without Reservoir* (naive)
-  vs *With Reservoir* (coordinated) — streaming `TxRecord` rows with a ✓/✗ and a clickable
+- Tabs per lane (liquidation / arb / cron). Each tab: two columns — *Without Truce* (naive)
+  vs *With Truce* (coordinated) — streaming `TxRecord` rows with a ✓/✗ and a clickable
   `explorerUrl`. Losers on the naive side show `gasUsed` ≪ `gasBilledWei` — the killer reveal.
 - Cumulative burn bars from `cumulative*Wei`.
 - "Fire round" button → `POST /round`; "Auto" toggle → `/auto/start|stop`.

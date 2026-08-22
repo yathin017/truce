@@ -7,7 +7,7 @@ import {
   enforcedMockPoolAbi,
   mockArbPoolAbi,
   mockCronJobAbi,
-} from "@reservoir/shared/abis";
+} from "@truce/shared/abis";
 import type { ArenaConfig } from "./config.js";
 import { accountsFor } from "./config.js";
 import { makeClients, deployContract, send, read, type BotClients } from "./chain.js";

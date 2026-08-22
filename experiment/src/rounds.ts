@@ -1,8 +1,8 @@
 import { createPublicClient, createWalletClient, http, type Address } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-import { claimGasLimit, PERFORM_GAS_LIMIT, type TxGas } from "@reservoir/shared";
-import { deployExecutor, reserve, perform } from "@reservoir/keeper/executor";
-import { loadArtifact } from "@reservoir/keeper/artifacts";
+import { claimGasLimit, PERFORM_GAS_LIMIT, type TxGas } from "@truce/shared";
+import { deployExecutor, reserve, perform } from "@truce/keeper/executor";
+import { loadArtifact } from "@truce/keeper/artifacts";
 import { DEMO_USER, type Fixtures } from "./fixtures.js";
 
 const PERFORM_GAS = PERFORM_GAS_LIMIT; // real liquidation success-path limit

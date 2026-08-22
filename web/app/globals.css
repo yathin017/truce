@@ -1,0 +1,45 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    background-color: theme("colors.paper");
+    color: theme("colors.ink");
+    font-feature-settings: "ss01", "cv01";
+  }
+  ::selection {
+    background: theme("colors.coord-tint");
+    color: theme("colors.ink");
+  }
+  /* Tabular figures everywhere numbers matter. */
+  .tnum {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
+  }
+}
+
+@layer components {
+  .wrap {
+    @apply mx-auto w-full max-w-wrap px-6 sm:px-8;
+  }
+  .eyebrow {
+    @apply font-mono text-[11px] uppercase tracking-[0.18em] text-muted;
+  }
+  .rule {
+    @apply border-t border-hairline;
+  }
+  .card {
+    @apply rounded-xl border border-hairline bg-surface;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-hairline bg-surface px-3.5 py-2 font-mono text-[12px] font-medium tracking-wide text-ink transition-colors hover:bg-raised disabled:cursor-not-allowed disabled:opacity-40;
+  }
+  .btn-solid {
+    @apply border-ink bg-ink text-paper hover:bg-ink-2 hover:border-ink-2;
+  }
+}

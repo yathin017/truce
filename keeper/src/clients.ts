@@ -1,6 +1,6 @@
 import { createPublicClient, createWalletClient, http, type Chain } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-import { monadTestnet, anvil } from "@reservoir/shared";
+import { monadTestnet, anvil } from "@truce/shared";
 import type { KeeperConfig } from "./types.js";
 
 export function chainFor(chainId: number): Chain {

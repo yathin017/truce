@@ -1,6 +1,6 @@
 # @reservoir/keeper
 
-A gas-aware keeper daemon for Reservoir. Config-driven — run a keeper without writing code.
+A gas-aware keeper daemon for Truce. Config-driven — run a keeper without writing code.
 
 ## Commands
 

@@ -25,4 +25,4 @@ number_underscore = "preserve"
 anvil = "http://127.0.0.1:8545"
 monad_testnet = "${MONAD_RPC_URL}"
 
-# Reservoir — gas-aware keeper coordination layer. Monad testnet chainId 10143.
+# Truce — gas-aware keeper coordination layer. Monad testnet chainId 10143.

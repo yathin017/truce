@@ -1,4 +1,4 @@
-# Contributing to Reservoir
+# Contributing to Truce
 
 House rules for keeping this hackathon repo clean and reviewable.
 
