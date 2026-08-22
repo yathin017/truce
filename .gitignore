@@ -9,8 +9,10 @@ build/
 
 # ── Next.js (web, Phase B) ────────────────────────────────────
 .next/
+.next-dev/
 out/
 web/.next/
+web/.next-dev/
 web/out/
 
 # ── Foundry (contracts) ───────────────────────────────────────
