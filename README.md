@@ -69,15 +69,60 @@ forge test  --root contracts -vvv  # contract tests
 
 # local devnet
 anvil
-forge script contracts/script/Deploy.s.sol --rpc-url anvil --broadcast
+forge script contracts/script/Deploy.s.sol:Deploy --root contracts \
+  --rpc-url http://127.0.0.1:8545 --broadcast \
+  --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+
+# the experiment (naive vs coordinated), and the 4-bot race
+pnpm --filter @reservoir/experiment start        # → the three bars
+pnpm --filter @reservoir/keeper dev race         # → four bots, one wins
 ```
 
 Networks: local **anvil** (chainId 31337) and **Monad testnet** (chainId 10143,
 RPC `https://testnet-rpc.monad.xyz`, explorer `https://testnet.monadexplorer.com`,
 faucet `https://faucet.monad.xyz`). Copy `.env.example` → `.env`.
 
+### Monad testnet
+
+Fund the deployer from the [faucet](https://faucet.monad.xyz), then:
+
+```bash
+export $(grep -v '^#' .env | xargs)   # DEPLOYER_PRIVATE_KEY, KEEPER_PRIVATE_KEY_1..4
+
+# deploy the canonical contracts + tasks (writes packages/shared/deployments/10143.json)
+forge script contracts/script/Deploy.s.sol:Deploy --root contracts \
+  --rpc-url $MONAD_RPC_URL --broadcast --private-key $DEPLOYER_PRIVATE_KEY
+
+# measure real declared-limit gas with a SINGLE funded account
+pnpm --filter @reservoir/experiment start -- measure --chain 10143 --out reports/monad-measure.json
+
+# or the full four-keeper experiment (needs KEEPER_PRIVATE_KEY_1..4 funded too)
+pnpm --filter @reservoir/experiment start -- --chain 10143 --out reports/monad-experiment.json
+```
+
 ## Measured results
 
-_Filled in after the Monad testnet deploy (declared-limit basis vs gas-used basis)._
+Local anvil (declared-limit basis — what Monad's accounting bills):
+
+| metric | naive | coordinated | reduction |
+| --- | --- | --- | --- |
+| MON charged (declared limit) | 4 × 500k | 4 × 130k + 500k | **~49%** |
+| block gas reserved | 2,000,000 | 1,020,000 | **~49%** |
+| useful-work ratio (used / reserved) | ~7% | ~27% | 3.7× |
+
+Success-path gas (anvil): cheap `claim` ≈ 88k (direct) / 113k (via executor); mock
+liquidation ≈ 109k. A real Aave liquidation success path is larger (~400–500k), which is
+why keepers declare 500k. The Ethereum counterfactual (gas *used*, reverts refunded) shows
+coordination costs slightly **more** there — the saving is specific to Monad's declared-limit
+accounting, which is the whole thesis.
+
+_Monad testnet figures: run the commands above and paste the numbers here._
+
+| metric (Monad testnet) | value |
+| --- | --- |
+| gas price | _tbd_ |
+| claim gas used / declared | _tbd_ |
+| liquidation gas used / declared | _tbd_ |
+| modeled declared-limit reduction | _tbd_ |
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md) for the git/PR conventions.
