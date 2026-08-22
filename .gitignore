@@ -50,3 +50,6 @@ lcov.info
 
 # Local anvil deployment (regenerated each run)
 packages/shared/deployments/31337.json
+
+# Local anvil arena world (regenerated each run)
+arena/deployments/arena-31337.json
