@@ -3,6 +3,7 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { parseEther, formatEther, type Address, type Hex } from "viem";
 import {
+  baseExecutorAbi,
   coordinatorAbi,
   enforcedMockPoolAbi,
   mockArbPoolAbi,
@@ -50,6 +51,12 @@ export interface Arena {
   botClients: BotClients[];
 }
 
+const EXECUTOR_ARTIFACT: Record<LaneId, string> = {
+  liquidation: "AaveLiquidationExecutor",
+  arb: "ArbJobExecutor",
+  cron: "HarvestExecutor",
+};
+
 function worldPath(chainId: number): string {
   return join(DEPLOY_DIR, `arena-${chainId}.json`);
 }
@@ -75,6 +82,83 @@ async function fundBots(cfg: ArenaConfig, deployer: BotClients, bots: BotClients
     await deployer.publicClient.waitForTransactionReceipt({ hash });
     console.log(`  funded ${bot.account.address} +${formatEther(topUp)} MON`);
   }
+}
+
+function sameAddress(a: Address, b: Address): boolean {
+  return a.toLowerCase() === b.toLowerCase();
+}
+
+function configuredBotAddresses(arena: Arena): Address[] {
+  return arena.botClients.map((bot) => bot.account.address);
+}
+
+function savedBotsMatch(arena: Arena): boolean {
+  const configured = configuredBotAddresses(arena);
+  return (
+    arena.world.bots.length === configured.length &&
+    arena.world.bots.every((address, i) => sameAddress(address, configured[i]!))
+  );
+}
+
+async function executorOperatorsMatch(arena: Arena): Promise<boolean> {
+  const configured = configuredBotAddresses(arena);
+  try {
+    const checks = await Promise.all(
+      Object.values(arena.world.lanes).flatMap((lane) =>
+        lane.executors.map(async (executor, i) => {
+          const operator = await read<Address>(
+            arena.deployer.publicClient,
+            executor,
+            baseExecutorAbi as never,
+            "operator",
+          );
+          return sameAddress(operator, configured[i]!);
+        }),
+      ),
+    );
+    return checks.every(Boolean);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Replace only the keeper-owned executors when a persisted arena was created with a different
+ * bot-key file. The coordinator, tasks, and naive/coordinated targets remain unchanged.
+ */
+async function repairExecutors(arena: Arena): Promise<void> {
+  console.log("  keeper keys changed — deploying matching executors for this experiment…");
+  const bots = configuredBotAddresses(arena);
+
+  for (const lane of Object.values(arena.world.lanes)) {
+    const executors: Address[] = [];
+    for (const bot of bots) {
+      const args =
+        lane.id === "liquidation"
+          ? [arena.world.coordinator, bot, lane.coordTarget]
+          : [arena.world.coordinator, bot];
+      executors.push(await deployContract(arena.deployer, EXECUTOR_ARTIFACT[lane.id], args));
+    }
+    lane.executors = executors;
+  }
+
+  arena.world.bots = bots;
+  const path = worldPath(arena.cfg.chainId);
+  mkdirSync(DEPLOY_DIR, { recursive: true });
+  writeFileSync(path, JSON.stringify(arena.world, null, 2));
+  console.log(`  matching executors written to ${path}`);
+}
+
+/**
+ * Do transaction-producing preparation only after a user explicitly starts an experiment.
+ * This prevents merely loading the landing page or starting the API from funding accounts or
+ * repairing stale executors.
+ */
+export async function prepareArenaForExperiment(arena: Arena): Promise<void> {
+  if (!savedBotsMatch(arena) || !(await executorOperatorsMatch(arena))) {
+    await repairExecutors(arena);
+  }
+  await fundBots(arena.cfg, arena.deployer, arena.botClients);
 }
 
 async function registerTask(
@@ -107,13 +191,19 @@ export async function bootstrap(cfg: ArenaConfig, forceRedeploy = false): Promis
   const deployer = makeClients(cfg, deployerAccount);
   const botClients = botAccounts.map((a) => makeClients(cfg, a));
 
-  await fundBots(cfg, deployer, botClients);
-
   const path = worldPath(cfg.chainId);
   if (!forceRedeploy && existsSync(path)) {
     const saved = JSON.parse(readFileSync(path, "utf8")) as World;
     if (await hasCode(deployer, saved.coordinator)) {
       console.log(`Reusing arena world from ${path}`);
+      const configured = botClients.map((bot) => bot.account.address);
+      if (
+        saved.bots.length !== configured.length ||
+        saved.bots.some((address, i) => !sameAddress(address, configured[i]!))
+      ) {
+        console.warn("  saved executor operators do not match the configured keeper keys");
+        console.warn("  they will be repaired only when an experiment is explicitly requested");
+      }
       return { cfg, world: saved, deployer, botClients };
     }
   }

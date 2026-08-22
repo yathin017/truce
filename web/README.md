@@ -1,4 +1,4 @@
-# @reservoir/web
+# @truce/web
 
 The Truce console — a Next.js frontend that explains the Monad gas-billing problem and shows
 the [arena](../arena) running live: two side-by-side columns, real transactions, clickable
@@ -15,10 +15,10 @@ label too.
 
 ```bash
 # 1. start the arena (see ../arena) — e.g. on Monad testnet:
-DEPLOYER_PRIVATE_KEY=0x… pnpm --filter @reservoir/arena serve --chain 10143 --auto
+DEPLOYER_PRIVATE_KEY=0x… pnpm --filter @truce/arena serve --chain 10143
 
 # 2. start the console
-pnpm --filter @reservoir/web dev        # http://localhost:3000
+pnpm --filter @truce/web dev        # http://localhost:3000
 ```
 
 Point it at a different arena with `NEXT_PUBLIC_ARENA_URL` (default `http://localhost:8787`).

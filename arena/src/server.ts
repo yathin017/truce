@@ -3,12 +3,9 @@ import cors from "@fastify/cors";
 import websocket from "@fastify/websocket";
 import type { WebSocket } from "ws";
 import type { Engine } from "./engine.js";
-import type { LaneId } from "./types.js";
 
-const LANES: LaneId[] = ["liquidation", "arb", "cron"];
-
-/** Fastify server exposing the arena to the frontend: REST snapshot + WS live feed. */
-export async function startServer(engine: Engine, port: number): Promise<void> {
+/** Build the arena API. Exported separately so route behavior can be tested without a port. */
+export async function buildServer(engine: Engine) {
   const app = Fastify({ logger: false });
   await app.register(cors, { origin: true });
   await app.register(websocket);
@@ -34,34 +31,34 @@ export async function startServer(engine: Engine, port: number): Promise<void> {
   });
 
   // Fire one full round (all three lanes).
-  app.post("/round", async () => {
+  app.post("/round", async (_req, reply) => {
+    if (!engine.canRunManual) {
+      const error = engine.budgetExhausted ? "budget exhausted" : "arena busy";
+      return reply.code(409).send({ accepted: false, error, state: engine.state() });
+    }
     void engine.runAll();
-    return { accepted: true };
+    return reply.code(202).send({ accepted: true, state: engine.state() });
   });
 
-  // Fire one lane round.
-  app.post<{ Params: { lane: string } }>("/round/:lane", async (req, reply) => {
-    const lane = req.params.lane as LaneId;
-    if (!LANES.includes(lane)) return reply.code(400).send({ error: "unknown lane" });
-    void engine.runLane(lane);
-    return { accepted: true, lane };
-  });
+  return app;
+}
 
-  // Auto-loop controls.
-  app.post("/auto/start", async () => {
-    engine.startAuto();
-    return { running: true };
-  });
-  app.post("/auto/stop", async () => {
-    engine.stopAuto();
-    return { running: false };
-  });
+/** Fastify server exposing the arena to the frontend: REST snapshot + WS live feed. */
+export async function startServer(engine: Engine, port: number): Promise<void> {
+  const app = await buildServer(engine);
 
-  await app.listen({ port, host: "0.0.0.0" });
+  try {
+    await app.listen({ port, host: "0.0.0.0" });
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code === "EADDRINUSE") {
+      throw new Error(
+        `arena port ${port} is already in use; stop the existing arena or set ARENA_PORT to another port`,
+      );
+    }
+    throw err;
+  }
   console.log(`\nArena API on http://localhost:${port}`);
   console.log(`  GET  /state          snapshot`);
   console.log(`  WS   /events         live feed`);
-  console.log(`  POST /round          fire all lanes`);
-  console.log(`  POST /round/:lane    fire one lane (liquidation|arb|cron)`);
-  console.log(`  POST /auto/start|stop`);
+  console.log(`  POST /round          run one explicit three-lane experiment`);
 }

@@ -126,6 +126,14 @@ async function runNaive(arena: Arena, lane: LaneWorld, workRaw: bigint, spend: S
     t.from = arena.botClients[i]!.account.address;
     txs.push(t);
   }
+
+  const winners = txs.filter((tx) => tx.success).length;
+  if (txs.length !== arena.botClients.length || winners !== 1) {
+    const rejected = results.filter((r) => r.status === "rejected").length;
+    throw new Error(
+      `${lane.id} naive race incomplete: expected ${arena.botClients.length} receipts and one winner, got ${txs.length} receipts, ${winners} winners, ${rejected} submission errors`,
+    );
+  }
   return txs;
 }
 
@@ -163,6 +171,7 @@ async function runCoordinated(
 
   const txs: TxRecord[] = [];
   let winner = -1;
+  let winners = 0;
   for (const r of results) {
     if (r.status !== "fulfilled") continue;
     const { i, tx } = r.value;
@@ -178,9 +187,17 @@ async function runCoordinated(
     );
     rec.from = arena.botClients[i]!.account.address;
     txs.push(rec);
-    if (ok) winner = i;
+    if (ok) {
+      winner = i;
+      winners += 1;
+    }
   }
-  if (winner < 0) return txs; // nobody won (shouldn't happen after reset)
+  const rejected = results.filter((r) => r.status === "rejected").length;
+  if (winners !== 1 || winner < 0) {
+    throw new Error(
+      `${lane.id} coordinated claim race incomplete: expected ${arena.botClients.length} receipts and one winner, got ${txs.length} receipts, ${winners} winners, ${rejected} submission errors`,
+    );
+  }
 
   // The direct call and `perform` contain the same expensive work. Reusing the estimate keeps
   // the comparison stable when Monad's `eth_estimateGas` intermittently fails on one side.
@@ -209,6 +226,16 @@ async function runCoordinated(
   );
   exec.from = arena.botClients[winner]!.account.address;
   txs.push(exec);
+  if (!exec.success) {
+    throw new Error(`${lane.id} coordinated execution reverted for winning keeper K${winner + 1}`);
+  }
+  // If some losing submissions failed before producing receipts, execute the valid winner first
+  // so its claim is consumed, then reject the incomplete sample instead of leaving a live lock.
+  if (txs.length !== arena.botClients.length + 1) {
+    throw new Error(
+      `${lane.id} coordinated claim race incomplete: expected ${arena.botClients.length} claim receipts, got ${txs.length - 1}, ${rejected} submission errors`,
+    );
+  }
   return txs;
 }
 

@@ -15,6 +15,7 @@ export function TxRow({ tx, index }: { tx: TxRecord; index: number }) {
   const barClass = isNaive ? "bg-naive" : "bg-coord";
   const ratio = usefulRatio(tx);
   const wasted = !tx.success && ratio < 0.5;
+  const lostClaim = tx.role === "claim" && !tx.success;
 
   return (
     <div
@@ -59,7 +60,12 @@ export function TxRow({ tx, index }: { tx: TxRecord; index: number }) {
         </div>
       </div>
 
-      {wasted && (
+      {lostClaim && (
+        <p className="mt-1.5 font-mono text-[10.5px] text-coord">
+          reservation lost — stood down before the expensive execution
+        </p>
+      )}
+      {wasted && !lostClaim && (
         <p className="mt-1.5 font-mono text-[10.5px] text-naive">
           reverted having used {Math.round(ratio * 100)}% of its limit — billed in full
         </p>

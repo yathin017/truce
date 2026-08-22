@@ -5,6 +5,7 @@ import { Nav } from "./Nav";
 import { Hero } from "./Hero";
 import { HeroAnimation } from "./HeroAnimation";
 import { HowItWorks } from "./HowItWorks";
+import { UseCaseExplainer } from "./UseCaseExplainer";
 import { Arena } from "./Arena";
 import { BurnMeter } from "./BurnMeter";
 import { Footer } from "./Footer";
@@ -22,6 +23,7 @@ export function Console() {
           <HeroAnimation />
         </section>
         <HowItWorks />
+        <UseCaseExplainer />
         <Arena arena={arena} />
         <BurnMeter state={arena.state} />
         <Footer state={arena.state} />

@@ -12,7 +12,6 @@ export interface ArenaConfig {
   botKeys: Hex[];
   botFundingWei: bigint; // top up each bot to this on bootstrap (non-anvil)
   budgetCapWei: bigint; // hard stop for total spend this session
-  autoIntervalMs: number;
   port: number;
   gasFactor: number; // headroom multiplier applied to eth_estimateGas
 }
@@ -74,7 +73,6 @@ export function loadConfig(chainId: number): ArenaConfig {
     botKeys,
     botFundingWei: parseEther(env("ARENA_BOT_FUNDING") ?? "3"),
     budgetCapWei: parseEther(env("ARENA_BUDGET_MON") ?? (isAnvil ? "1000000" : "15")),
-    autoIntervalMs: Number(env("ARENA_INTERVAL_MS") ?? 10_000),
     port: Number(env("ARENA_PORT") ?? 8787),
     gasFactor: Number(env("ARENA_GAS_FACTOR") ?? 1.25),
   };

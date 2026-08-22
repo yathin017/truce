@@ -54,8 +54,9 @@ export interface ArenaState {
   explorerBase: string;
   gasPriceWei: string;
   bots: `0x${string}`[];
+  busy: boolean;
+  runningLane: LaneId | null;
   budget: { capWei: string; spentWei: string; remainingWei: string };
-  auto: { running: boolean; intervalMs: number };
   overall: { rounds: number; meanSavingsPct: number; cumulativeNaiveWei: string; cumulativeCoordWei: string };
   lanes: LaneStats[];
   recentRounds: RoundRecord[];
