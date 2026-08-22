@@ -1,12 +1,11 @@
 import { createPublicClient, createWalletClient, http, type Address } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-import type { TxGas } from "@reservoir/shared";
+import { claimGasLimit, PERFORM_GAS_LIMIT, type TxGas } from "@reservoir/shared";
 import { deployExecutor, reserve, perform } from "@reservoir/keeper/executor";
 import { loadArtifact } from "@reservoir/keeper/artifacts";
 import { DEMO_USER, type Fixtures } from "./fixtures.js";
 
-const CLAIM_GAS = 130_000n; // tight cheap-claim limit
-const PERFORM_GAS = 500_000n; // real liquidation success-path limit
+const PERFORM_GAS = PERFORM_GAS_LIMIT; // real liquidation success-path limit
 
 export interface RoundResult {
   label: string;
@@ -70,6 +69,7 @@ export async function runNaive(fx: Fixtures): Promise<RoundResult> {
  */
 export async function runCoordinated(fx: Fixtures): Promise<RoundResult> {
   const keepers = keeperClients(fx);
+  const claimGas = claimGasLimit(fx.chainId);
   const executors: Address[] = [];
   for (const k of keepers) {
     executors.push(await deployExecutor(k, "aave", fx.coordinator, k.account.address, [fx.coordPool]));
@@ -80,7 +80,7 @@ export async function runCoordinated(fx: Fixtures): Promise<RoundResult> {
 
   const results = await Promise.allSettled(
     keepers.map((k, i) =>
-      reserve(k, executors[i]!, fx.taskId, fx.subject, fx.bondWei, CLAIM_GAS).then((tx) => ({ i, tx })),
+      reserve(k, executors[i]!, fx.taskId, fx.subject, fx.bondWei, claimGas).then((tx) => ({ i, tx })),
     ),
   );
   for (const r of results) {

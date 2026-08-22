@@ -50,7 +50,10 @@ export function chainFor(chainId: number): Chain {
 export const DEMO_USER: Address = "0x00000000000000000000000000000000000A11cE";
 const WAD = 10n ** 18n;
 
-const WINDOW = 3;
+// Exclusivity window in blocks. The product only needs 1-2 blocks, but a scripted
+// experiment (deploy → claim → wait receipt → perform) spans more real blocks over RPC,
+// so the fixture uses a comfortable window that also covers Monad's ~1s blocks.
+const WINDOW = 30;
 const BOND = 10_000_000_000_000_000n; // 0.01 MON
 
 export interface Fixtures {

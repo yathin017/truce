@@ -1,0 +1,26 @@
+{
+  "chainId": 10143,
+  "collateralOracle": "0x98f564d147ee40EBBE9f7ec670a590989b5a93f3",
+  "coordinator": "0x376ffecB62143019323bD02d832903ac05fA78C7",
+  "mockPool": "0x968cA81263A421F70D956a46Dc5048F487C3fdAE",
+  "mockVault": "0xc8907D1E5735B8C0C6ae20e1801DE640B34Bf235",
+  "poolPriceSource": "0x079c6cB5D086b5Df756C6F236992B48093704e9F",
+  "refOracle": "0x3e7d33E46B5Cd64CfFEd977038Ff5a5FE320F8ab",
+  "tasks": {
+    "aave": {
+      "label": "Aave liquidation",
+      "predicate": "0xF1b06d0FEfDb393b90135254c478f6d63a0A32c1",
+      "taskId": "0x5448cbfa54b3d81a648398774862e357b0ee5b767acc6b7d85dedb748e2ca29a"
+    },
+    "arb": {
+      "label": "DEX arbitrage",
+      "predicate": "0xdf098feF9Fc67F34E11144c0684623f763fe6d13",
+      "taskId": "0xe2b461e946a78210a12858534b9346657cbd8e1a8d4bb424e4abfac1db43614e"
+    },
+    "cron": {
+      "label": "Cron / harvest",
+      "predicate": "0x3A80A21F3b1Cb78B053DE7F743D4F7Af14d21736",
+      "taskId": "0xdfe95f88d6e641bb13a0f3e5cf00b0715df669c8620a85b2d24b8c9a6da624f0"
+    }
+  }
+}

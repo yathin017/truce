@@ -7,6 +7,8 @@ import {
   blockGasReserved,
   usefulWorkRatio,
   reductionPct,
+  claimGasLimit,
+  PERFORM_GAS_LIMIT,
   type TxGas,
 } from "@reservoir/shared";
 import { coordinatorAbi } from "@reservoir/shared/abis";
@@ -26,8 +28,7 @@ const ANVIL_KEYS = {
 } as const;
 
 const DEMO_USER: Address = "0x00000000000000000000000000000000000A11cE";
-const CLAIM_GAS = 130_000n; // tight — declared limit is what Monad bills (winner uses ~113k)
-const PERFORM_GAS = 500_000n; // a real liquidation's success-path limit
+const PERFORM_GAS = PERFORM_GAS_LIMIT; // a real liquidation's success-path limit
 
 export interface RaceOptions {
   rpc: string;
@@ -54,6 +55,7 @@ export async function runRace(opts: RaceOptions): Promise<void> {
   const deployer = privateKeyToAccount(ANVIL_KEYS.deployer);
   const deployerWallet = createWalletClient({ account: deployer, chain, transport });
   const publicClient = createPublicClient({ chain, transport });
+  const claimGas = claimGasLimit(opts.chainId);
 
   const bondWei = (
     (await publicClient.readContract({
@@ -95,7 +97,7 @@ export async function runRace(opts: RaceOptions): Promise<void> {
   const claimTxs: TxGas[] = [];
   const results = await Promise.allSettled(
     keepers.map((k) =>
-      reserve(k.clients, executors[k.i]!, taskId, subject, bondWei, CLAIM_GAS).then((tx) => ({ k, tx })),
+      reserve(k.clients, executors[k.i]!, taskId, subject, bondWei, claimGas).then((tx) => ({ k, tx })),
     ),
   );
 
