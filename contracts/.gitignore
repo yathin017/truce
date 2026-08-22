@@ -1,0 +1,7 @@
+# Foundry
+out/
+cache/
+broadcast/
+# keep deployment artifacts of real networks if desired, ignore local runs
+broadcast/**/31337/
+.env
