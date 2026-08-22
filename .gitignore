@@ -54,3 +54,4 @@ packages/shared/deployments/31337.json
 # Local anvil arena world (regenerated each run)
 arena/deployments/arena-31337.json
 arena/deployments/bot-keys-*.json
+next-env.d.ts
