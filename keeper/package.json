@@ -6,6 +6,13 @@
   "bin": {
     "reservoir-keeper": "src/index.ts"
   },
+  "exports": {
+    "./executor": { "types": "./src/executor.ts", "default": "./src/executor.ts" },
+    "./artifacts": { "types": "./src/artifacts.ts", "default": "./src/artifacts.ts" },
+    "./clients": { "types": "./src/clients.ts", "default": "./src/clients.ts" },
+    "./coordinator": { "types": "./src/coordinator.ts", "default": "./src/coordinator.ts" },
+    "./log": { "types": "./src/log.ts", "default": "./src/log.ts" }
+  },
   "scripts": {
     "dev": "tsx src/index.ts",
     "typecheck": "tsc --noEmit"

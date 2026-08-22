@@ -1,0 +1,38 @@
+# Reservoir keeper — example config. Run a keeper without writing code.
+#   pnpm --filter @reservoir/keeper dev run --config keeper.example.yml
+
+rpc: http://127.0.0.1:8545
+chainId: 31337
+
+# Private key (0x…). Supports ${ENV_VAR}; keep real keys in .env, never here.
+account: ${KEEPER_PRIVATE_KEY_1}
+
+# Optional — otherwise loaded from packages/shared/deployments/<chainId>.json
+# coordinator: "0x…"
+
+# This keeper's executor contract (required for `run`). Deploy a BaseExecutor
+# subclass whose _work performs the task; the daemon calls reserve() then perform().
+executor: "0xYOUR_EXECUTOR"
+
+label: K1
+pollIntervalMs: 1000
+
+safety:
+  maxBondPerClaim: "0.05" # MON
+  maxConcurrentClaims: 5
+  maxDailyBondExposure: "1.0" # MON — hard stop for the run
+  onlyVerifiedTasks: true # only act on tasks in the local/curated set
+  minTaskAgeBlocks: 0
+  maxTaskSlashRate: 0.10 # refuse tasks slashing >10% of claims
+  requireStableEligible: 1 # eligible N consecutive polls before claiming
+  dryRun: false
+
+tasks:
+  - taskId: "0xREPLACE_WITH_AAVE_TASK_ID"
+    subjects:
+      - "0x00000000000000000000000000000000000A11cE" # demo position owner
+    # A TIGHT declared limit is the whole point: on Monad you pay the limit you
+    # declare, so a padded claim reintroduces the exact bug we remove.
+    claimGasLimit: 150000
+    performGasLimit: 500000
+    payload: "0x"
