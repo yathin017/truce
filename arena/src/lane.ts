@@ -7,7 +7,7 @@ import {
 } from "@reservoir/shared/abis";
 import { reserve, perform } from "@reservoir/keeper/executor";
 import { send } from "./chain.js";
-import { estimateDeclared } from "./gas.js";
+import { estimateRaw, perBotLimits, declaredFromRaw, botFactor, floorFor } from "./gas.js";
 import type { Arena, LaneWorld } from "./world.js";
 import { DEMO_USER } from "./world.js";
 import type { LaneId, RoundRecord, SideResult, TxRecord, TxRole } from "./types.js";
@@ -95,7 +95,8 @@ async function runNaive(arena: Arena, lane: LaneWorld, spend: Spend): Promise<Tx
   const explorer = arena.cfg.explorerBase;
   const first = arena.botClients[0]!;
 
-  const declaredGas = await estimateDeclared(role, arena.cfg.chainId, arena.cfg.gasFactor, {
+  // One estimate of the success path; each bot pads it by its own margin (distinct limits).
+  const raw = await estimateRaw(role, arena.cfg.chainId, {
     publicClient: first.publicClient,
     account: first.account,
     address: lane.naiveTarget,
@@ -103,10 +104,11 @@ async function runNaive(arena: Arena, lane: LaneWorld, spend: Spend): Promise<Tx
     functionName: fn,
     args,
   });
+  const limits = perBotLimits(raw, role, arena.cfg.chainId, arena.cfg.gasFactor, arena.botClients.length);
 
   const results = await Promise.allSettled(
     arena.botClients.map((bot, i) =>
-      send(bot, lane.naiveTarget, abi as never, fn, args, { gas: declaredGas }).then((res) => ({ i, res })),
+      send(bot, lane.naiveTarget, abi as never, fn, args, { gas: limits[i]! }).then((res) => ({ i, res })),
     ),
   );
   const txs: TxRecord[] = [];
@@ -114,7 +116,7 @@ async function runNaive(arena: Arena, lane: LaneWorld, spend: Spend): Promise<Tx
     if (r.status !== "fulfilled") continue;
     const { i, res } = r.value;
     spend(res.billedWei);
-    const t = txRecord("naive", role, i, declaredGas, res, explorer);
+    const t = txRecord("naive", role, i, limits[i]!, res, explorer);
     t.from = arena.botClients[i]!.account.address;
     txs.push(t);
   }
@@ -127,8 +129,8 @@ async function runCoordinated(arena: Arena, lane: LaneWorld, spend: Spend): Prom
   const bond = await bondOf(arena, lane);
   const first = arena.botClients[0]!;
 
-  // Estimate the cheap claim live (all bots declare the same claim limit).
-  const claimGas = await estimateDeclared("claim", arena.cfg.chainId, arena.cfg.gasFactor, {
+  // Estimate the cheap claim once; each bot pads it by its own margin (distinct limits).
+  const claimRaw = await estimateRaw("claim", arena.cfg.chainId, {
     publicClient: first.publicClient,
     account: first.account,
     address: lane.executors[0]!,
@@ -137,10 +139,11 @@ async function runCoordinated(arena: Arena, lane: LaneWorld, spend: Spend): Prom
     args: [lane.taskId, lane.subject],
     value: bond,
   });
+  const claimLimits = perBotLimits(claimRaw, "claim", arena.cfg.chainId, arena.cfg.gasFactor, arena.botClients.length);
 
   const results = await Promise.allSettled(
     arena.botClients.map((bot, i) =>
-      reserve(bot as never, lane.executors[i]!, lane.taskId, lane.subject, bond, claimGas).then((tx) => ({ i, tx })),
+      reserve(bot as never, lane.executors[i]!, lane.taskId, lane.subject, bond, claimLimits[i]!).then((tx) => ({ i, tx })),
     ),
   );
 
@@ -165,8 +168,9 @@ async function runCoordinated(arena: Arena, lane: LaneWorld, spend: Spend): Prom
   }
   if (winner < 0) return txs; // nobody won (shouldn't happen after reset)
 
-  // The winner now holds the claim, so `perform` is simulatable — estimate the execution live.
-  const performGas = await estimateDeclared("execute", arena.cfg.chainId, arena.cfg.gasFactor, {
+  // The winner now holds the claim, so `perform` is simulatable — estimate the execution live,
+  // padded by the winning bot's own margin.
+  const performRaw = await estimateRaw("execute", arena.cfg.chainId, {
     publicClient: arena.botClients[winner]!.publicClient,
     account: arena.botClients[winner]!.account,
     address: lane.executors[winner]!,
@@ -174,6 +178,11 @@ async function runCoordinated(arena: Arena, lane: LaneWorld, spend: Spend): Prom
     functionName: "perform",
     args: [lane.taskId, lane.subject, "0x"],
   });
+  const performGas = declaredFromRaw(
+    performRaw,
+    botFactor(arena.cfg.gasFactor, winner),
+    floorFor("execute", arena.cfg.chainId),
+  );
 
   const perf = await perform(
     arena.botClients[winner] as never,

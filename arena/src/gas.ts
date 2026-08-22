@@ -3,16 +3,27 @@ import { claimGasLimit } from "@reservoir/shared";
 import type { TxRole } from "./types.js";
 
 /**
- * Declared-limit policy. Every declared gas limit in the arena is derived from a live
- * `eth_estimateGas` on the actual call, times a headroom factor, rounded up — never a
- * hardcoded constant. A per-role floor guards two cases: (1) `eth_estimateGas` throwing
- * (Monad occasionally errors on simulation), and (2) Monad's live metering running above
- * a node's estimate for cold-storage-heavy paths (a claim estimates ~113k but needs ~200k
- * on testnet), so the floor keeps a winning tx from running out of gas.
+ * Declared-limit policy. Gas limits are derived from a live `eth_estimateGas` on the actual
+ * call, then padded per bot — never a hardcoded constant.
+ *
+ * Real keepers don't all declare the same limit: each pads its estimate by a different safety
+ * margin. We model that with a stable per-bot "personality" factor plus a little per-round
+ * jitter, so every row on the UI shows a distinct, realistic gas figure while staying safely
+ * above the out-of-gas floor.
  */
 
-/** Minimum declared limit per role, so estimate-under-shoot never causes an out-of-gas. */
-function floorFor(role: TxRole, chainId: number): bigint {
+/** Stable per-bot padding personalities (added to the base factor). Bot 0 pads tightest. */
+const BOT_SPREAD = [0.0, 0.16, 0.08, 0.24];
+
+/** Per-round headroom factor for bot `i`: base + its personality + small jitter. */
+export function botFactor(base: number, i: number): number {
+  const spread = BOT_SPREAD[i % BOT_SPREAD.length] ?? 0;
+  const jitter = (Math.random() - 0.5) * 0.06; // ±3%
+  return Math.max(1.02, base + spread + jitter);
+}
+
+/** Minimum declared limit per role, so estimate under-shoot never causes an out-of-gas. */
+export function floorFor(role: TxRole, chainId: number): bigint {
   switch (role) {
     case "claim":
       return claimGasLimit(chainId); // chain-aware: 200k Monad, 130k anvil
@@ -26,9 +37,11 @@ function floorFor(role: TxRole, chainId: number): bigint {
   }
 }
 
-function padAndRound(estimate: bigint, factor: number): bigint {
-  const padded = (estimate * BigInt(Math.round(factor * 1000))) / 1000n;
-  return ((padded + 999n) / 1000n) * 1000n; // round up to the nearest 1k for legibility
+/** Apply a bot's factor to a raw estimate, round up for legibility, enforce the floor. */
+export function declaredFromRaw(rawEstimate: bigint, factor: number, floor: bigint): bigint {
+  const padded = (rawEstimate * BigInt(Math.round(factor * 1000))) / 1000n;
+  const rounded = ((padded + 999n) / 1000n) * 1000n; // round up to the nearest 1k
+  return rounded > floor ? rounded : floor;
 }
 
 export interface EstimateArgs {
@@ -41,26 +54,24 @@ export interface EstimateArgs {
   value?: bigint;
 }
 
-/** Estimate a call's gas, apply the headroom factor, and enforce the role floor. */
-export async function estimateDeclared(
-  role: TxRole,
-  chainId: number,
-  factor: number,
-  { publicClient, account, address, abi, functionName, args, value }: EstimateArgs,
-): Promise<bigint> {
-  const floor = floorFor(role, chainId);
+/** Raw `eth_estimateGas` for a call (no padding). Falls back to the role floor if it throws. */
+export async function estimateRaw(role: TxRole, chainId: number, a: EstimateArgs): Promise<bigint> {
   try {
-    const est = await publicClient.estimateContractGas({
-      address,
-      abi,
-      functionName,
-      args,
-      account,
-      ...(value !== undefined ? { value } : {}),
-    } as never);
-    const declared = padAndRound(est, factor);
-    return declared > floor ? declared : floor;
+    return (await a.publicClient.estimateContractGas({
+      address: a.address,
+      abi: a.abi,
+      functionName: a.functionName,
+      args: a.args,
+      account: a.account,
+      ...(a.value !== undefined ? { value: a.value } : {}),
+    } as never)) as bigint;
   } catch {
-    return floor; // estimation unavailable → fall back to the safe floor
+    return floorFor(role, chainId); // estimation unavailable → safe baseline
   }
+}
+
+/** One raw estimate, padded into a distinct declared limit for each of `count` bots. */
+export function perBotLimits(rawEstimate: bigint, role: TxRole, chainId: number, base: number, count: number): bigint[] {
+  const floor = floorFor(role, chainId);
+  return Array.from({ length: count }, (_, i) => declaredFromRaw(rawEstimate, botFactor(base, i), floor));
 }
