@@ -28,6 +28,9 @@ const CONTRACTS = [
   "EnforcedMockPool",
   "MockOracle",
   "MockVault",
+  "MockArbPool",
+  "MockCronJob",
+  "ArbJobExecutor",
 ];
 
 function abiExportName(name: string): string {
