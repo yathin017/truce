@@ -22,7 +22,12 @@ export function botFactor(base: number, i: number): number {
   return Math.max(1.02, base + spread + jitter);
 }
 
-/** Minimum declared limit per role, so estimate under-shoot never causes an out-of-gas. */
+/**
+ * Minimum declared limit per role, so an estimate under-shoot never causes an out-of-gas.
+ * The expensive-work floor is kept well above the claim floor: if `eth_estimateGas` fails and
+ * both sides fall back to floors, the expensive work must still read as expensive, or the
+ * naive-vs-coordinated comparison could invert (a real liquidation success path is ~400–600k).
+ */
 export function floorFor(role: TxRole, chainId: number): bigint {
   switch (role) {
     case "claim":
@@ -31,9 +36,9 @@ export function floorFor(role: TxRole, chainId: number): bigint {
     case "liquidate":
     case "arb":
     case "harvest":
-      return chainId === 10143 ? 260_000n : 150_000n;
+      return chainId === 10143 ? 420_000n : 320_000n;
     default:
-      return 150_000n;
+      return 320_000n;
   }
 }
 
