@@ -1,0 +1,54 @@
+{
+  "chainId": 10143,
+  "coordinator": "0xb26381d4a04d85f06d06d8f66548ddd502c323e4",
+  "bots": [
+    "0xaF79f8C6236C4eFe9D64B823A3CAeEe30565D200",
+    "0x05e12bfaCf5Cda905D218d15602ACB827B0d41aB",
+    "0xDb341b3ad1FCbfd195A4632Db369ea4507bD9156",
+    "0x139Cf69cfA3D2d46f9fD326C0f8cD722DD0aDe79"
+  ],
+  "lanes": {
+    "liquidation": {
+      "id": "liquidation",
+      "label": "Aave liquidation",
+      "subject": "0x00000000000000000000000000000000000000000000000000000000000A11cE",
+      "taskId": "0xf071b95067db0ab08fb1c0615b2d6af5e09cae13229cab17dffcd199832622ad",
+      "naiveTarget": "0xf3951119d5bce0db6943aa54f7008f6b03833408",
+      "coordTarget": "0xac06ac357611a31374fa64547a16f8bf39f683f8",
+      "executors": [
+        "0x3cda17fa87d081fc0c008bb14ccd8ee76cbf37e6",
+        "0xf6465fe3af4fc8b3e918259ef39583fdc8a9eed0",
+        "0x01b9d9d6d092ee35cafacf1431261edd8f816db5",
+        "0x22f0e18932a68eee3c370e1b5268bebdca87d370"
+      ]
+    },
+    "arb": {
+      "id": "arb",
+      "label": "DEX arbitrage",
+      "subject": "0x000000000000000000000000cdcc2024d7770225354bc6524d84a261c298e462",
+      "taskId": "0x31ee07a18bcf8ff29b363014068130e903b1d17f23b9fcc9671a623b0a2ea3d2",
+      "naiveTarget": "0x2301a1a79a4963a33302bbd06e93953f186228ed",
+      "coordTarget": "0xcdcc2024d7770225354bc6524d84a261c298e462",
+      "executors": [
+        "0xebe923f3f4f64cb96151d9c06cc144d91619ffa0",
+        "0x157ffc992c8d32d76c18e8448d5a2e0434290c76",
+        "0x8397b126c27691cf1761b6a32d917aa73c0cfdc9",
+        "0x59c75bd4043a986d3fc9e222beec5cf110d62374"
+      ]
+    },
+    "cron": {
+      "id": "cron",
+      "label": "Cron / harvest",
+      "subject": "0x000000000000000000000000eb819ad76070fdaa54de37df5b3d5b17088e1b0b",
+      "taskId": "0x7909c9b048705f29a179791a1c3d381a0177bfd34419c9f8526231b81f70a1b9",
+      "naiveTarget": "0xf0d3bd99b4434fcfe7f3fd29dcc811e5e697c64f",
+      "coordTarget": "0xeb819ad76070fdaa54de37df5b3d5b17088e1b0b",
+      "executors": [
+        "0x0973557eb67f863947863c15e64b6508ae029156",
+        "0x66ec37f342d8a36552a9a4173ce8565c2c333c58",
+        "0x98521d66bd390d5ca96f0a888be2632a47469019",
+        "0x637b810413a5dfce795d050f6869ca6b8d63e163"
+      ]
+    }
+  }
+}

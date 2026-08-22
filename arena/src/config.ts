@@ -1,6 +1,7 @@
 import { parseEther, type Chain, type Hex } from "viem";
 import { privateKeyToAccount, mnemonicToAccount } from "viem/accounts";
 import { anvil, monadTestnet } from "@reservoir/shared";
+import { loadOrCreateBotKeys } from "./keys.js";
 
 export interface ArenaConfig {
   chainId: number;
@@ -46,17 +47,20 @@ export function loadConfig(chainId: number): ArenaConfig {
     const dk = env("DEPLOYER_PRIVATE_KEY");
     if (!dk) throw new Error(`chain ${chainId} requires DEPLOYER_PRIVATE_KEY`);
     deployerKey = (dk.startsWith("0x") ? dk : `0x${dk}`) as Hex;
-    // Bots: derive 4 accounts from ARENA_MNEMONIC, or fall back to explicit KEEPER keys.
+    // Bot keys, in priority order: explicit KEEPER keys → ARENA_MNEMONIC → generated.
+    // Default to freshly generated keys: shared/well-known accounts can carry EIP-7702
+    // delegated code on Monad testnet and reject value transfers ("reserve balance
+    // violation"), so dedicated keys are the reliable choice.
+    const explicit = [1, 2, 3, 4].map((i) => env(`KEEPER_PRIVATE_KEY_${i}`));
     const mnemonic = env("ARENA_MNEMONIC");
-    if (mnemonic) {
-      botKeys = [0, 1, 2, 3].map((i) => mnemonicToAccount(mnemonic, { addressIndex: i }).getHdKey().privateKey!)
+    if (explicit.every((k) => k)) {
+      botKeys = explicit.map((k) => (k!.startsWith("0x") ? k! : `0x${k!}`) as Hex);
+    } else if (mnemonic) {
+      botKeys = [0, 1, 2, 3]
+        .map((i) => mnemonicToAccount(mnemonic, { addressIndex: i }).getHdKey().privateKey!)
         .map((b) => `0x${Buffer.from(b).toString("hex")}` as Hex);
     } else {
-      botKeys = [1, 2, 3, 4].map((i) => {
-        const k = env(`KEEPER_PRIVATE_KEY_${i}`);
-        if (!k) throw new Error(`set ARENA_MNEMONIC or KEEPER_PRIVATE_KEY_1..4 for chain ${chainId}`);
-        return (k.startsWith("0x") ? k : `0x${k}`) as Hex;
-      });
+      botKeys = loadOrCreateBotKeys(chainId);
     }
   }
 

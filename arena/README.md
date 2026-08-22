@@ -8,6 +8,21 @@ Three use cases run on one coordinator — **liquidation**, **DEX arbitrage**, *
 proving the coordinator is protocol-agnostic. Each round the "protocol" refills the opportunity
 (re-drops the price / pushes the pool off-peg / marks the job due) and the bots race again.
 
+## Verified on Monad testnet (chainId 10143)
+
+Coordinator `0xb26381d4a04d85f06d06d8f66548ddd502c323e4`. Every tx is real and on the
+[explorer](https://testnet.monadexplorer.com). Example cron round (102 gwei):
+
+| side | txs | declared/billed | mean savings |
+| --- | --- | --- | --- |
+| naive | 4 × harvest (1 ok, 3 revert) — **each billed 0.051 MON** | 0.204 MON | — |
+| coordinated | 4 × claim (1 ok, 3 revert) + 1 execute | 0.1326 MON | **35%** |
+
+The reveal: on Monad a *reverted* harvest that did nothing is billed the **full 500k declared
+limit** (0.051 MON) — identical to the winner. `gasUsed == gasLimit == billed`. Losing the race
+is as expensive as winning it, which is exactly what the cheap-claim path removes. (On anvil,
+which bills gas *used*, the same demo shows ~49% because the claim path is even cheaper there.)
+
 ## Run
 
 ```bash
