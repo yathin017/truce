@@ -1,23 +1,20 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import type { ArenaHandle } from "@/lib/arena";
 import { LANE_META, LANE_ORDER, type LaneId } from "@/lib/types";
-import { mon } from "@/lib/format";
 import { GasCompare } from "./GasCompare";
 import { LaneColumns } from "./LaneColumns";
 
 export function Arena({ arena }: { arena: ArenaHandle }) {
   const [lane, setLane] = useState<LaneId>("liquidation");
-  const { state, lastRound, runningLane, fireLane, setAuto } = arena;
+  const { state, lastRound, runningLane } = arena;
 
   const meta = LANE_META[lane];
   const round = lastRound[lane];
   const laneStat = state?.lanes.find((l) => l.id === lane);
   const running = runningLane === lane;
-  const auto = state?.auto.running ?? false;
-  const capBig = state ? BigInt(state.budget.capWei) > 1000n * 10n ** 18n : false;
-  const remaining = !state ? "—" : capBig ? "dev · uncapped" : `${mon(state.budget.remainingWei, 2)} MON`;
 
   return (
     <section id="arena" className="border-t border-hairline">
@@ -33,14 +30,9 @@ export function Arena({ arena }: { arena: ArenaHandle }) {
               the explorer. Watch the losers on the left get billed in full for doing nothing.
             </p>
           </div>
-          <Controls
-            connected={arena.connected}
-            running={running}
-            auto={auto}
-            remaining={remaining}
-            onRun={() => fireLane(lane)}
-            onAuto={() => setAuto(!auto)}
-          />
+          <Link href="/experiment" className="btn btn-solid shrink-0">
+            Open the experiment →
+          </Link>
         </div>
 
         <div className="mt-10">
@@ -121,38 +113,6 @@ function Tabs({
           </button>
         );
       })}
-    </div>
-  );
-}
-
-function Controls({
-  connected,
-  running,
-  auto,
-  remaining,
-  onRun,
-  onAuto,
-}: {
-  connected: boolean;
-  running: boolean;
-  auto: boolean;
-  remaining: string;
-  onRun: () => void;
-  onAuto: () => void;
-}) {
-  return (
-    <div className="flex shrink-0 flex-col items-start gap-2 sm:items-end">
-      <div className="flex items-center gap-2">
-        <button onClick={onRun} disabled={!connected || running || auto} className="btn btn-solid">
-          {running ? "racing…" : "Run one round"}
-        </button>
-        <button onClick={onAuto} disabled={!connected} className="btn">
-          {auto ? "■ Stop auto" : "▶ Auto-loop"}
-        </button>
-      </div>
-      <span className="font-mono text-[11px] text-faint">
-        {connected ? `budget left · ${remaining}` : "arena offline"}
-      </span>
     </div>
   );
 }

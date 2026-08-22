@@ -102,8 +102,10 @@ wins. (Raw numbers: [`reports/monad-measure.json`](./reports/monad-measure.json)
 RPC `https://testnet-rpc.monad.xyz` · explorer `https://testnet.monadexplorer.com` · faucet
 `https://faucet.monad.xyz` · native token **MON** · ~1s blocks.
 
-**Canonical deployment** (`contracts/script/Deploy.s.sol`, in
-[`packages/shared/deployments/10143.json`](./packages/shared/deployments/10143.json)):
+**Canonical protocol deployment** (`contracts/script/Deploy.s.sol`, in
+[`packages/shared/deployments/10143.json`](./packages/shared/deployments/10143.json)). This is the
+single-world deployment used by the keeper and measurement flows; it is intentionally separate
+from the side-by-side live-demo arena listed below.
 
 | contract | address |
 | --- | --- |
@@ -122,10 +124,16 @@ RPC `https://testnet-rpc.monad.xyz` · explorer `https://testnet.monadexplorer.c
 | DEX arbitrage | [`0xdf098feF9Fc67F34E11144c0684623f763fe6d13`](https://testnet.monadexplorer.com/address/0xdf098feF9Fc67F34E11144c0684623f763fe6d13) | `0xe2b461e946a78210a12858534b9346657cbd8e1a8d4bb424e4abfac1db43614e` |
 | Cron / harvest | [`0x3A80A21F3b1Cb78B053DE7F743D4F7Af14d21736`](https://testnet.monadexplorer.com/address/0x3A80A21F3b1Cb78B053DE7F743D4F7Af14d21736) | `0xdfe95f88d6e641bb13a0f3e5cf00b0715df669c8620a85b2d24b8c9a6da624f0` |
 
-> The **live-demo arena** deploys its own self-contained world (two pools per lane, four bots) so a
-> naive race and a coordinated race can run side by side. Its addresses are written to
-> `arena/deployments/arena-10143.json` at bootstrap; the arena coordinator used for the recorded
-> run was `0xb26381d4a04d85f06d06d8f66548ddd502c323e4`.
+**Live-demo arena deployment** ([`arena/deployments/arena-10143.json`](./arena/deployments/arena-10143.json)).
+The arena needs separate naive and coordinated targets for each lane so both approaches can run
+side by side. These are the addresses printed by `@truce/arena serve --chain 10143`:
+
+| lane / contract | naive target | coordinated target | taskId |
+| --- | --- | --- | --- |
+| **Arena coordinator** | — | [`0xb26381d4a04d85f06d06d8f66548ddd502c323e4`](https://testnet.monadexplorer.com/address/0xb26381d4a04d85f06d06d8f66548ddd502c323e4) | — |
+| Aave liquidation | [`0xf3951119d5bce0db6943aa54f7008f6b03833408`](https://testnet.monadexplorer.com/address/0xf3951119d5bce0db6943aa54f7008f6b03833408) | [`0xac06ac357611a31374fa64547a16f8bf39f683f8`](https://testnet.monadexplorer.com/address/0xac06ac357611a31374fa64547a16f8bf39f683f8) | `0xf071b95067db0ab08fb1c0615b2d6af5e09cae13229cab17dffcd199832622ad` |
+| DEX arbitrage | [`0x2301a1a79a4963a33302bbd06e93953f186228ed`](https://testnet.monadexplorer.com/address/0x2301a1a79a4963a33302bbd06e93953f186228ed) | [`0xcdcc2024d7770225354bc6524d84a261c298e462`](https://testnet.monadexplorer.com/address/0xcdcc2024d7770225354bc6524d84a261c298e462) | `0x31ee07a18bcf8ff29b363014068130e903b1d17f23b9fcc9671a623b0a2ea3d2` |
+| Cron / harvest | [`0xf0d3bd99b4434fcfe7f3fd29dcc811e5e697c64f`](https://testnet.monadexplorer.com/address/0xf0d3bd99b4434fcfe7f3fd29dcc811e5e697c64f) | [`0xeb819ad76070fdaa54de37df5b3d5b17088e1b0b`](https://testnet.monadexplorer.com/address/0xeb819ad76070fdaa54de37df5b3d5b17088e1b0b) | `0x7909c9b048705f29a179791a1c3d381a0177bfd34419c9f8526231b81f70a1b9` |
 
 ---
 
@@ -200,13 +208,16 @@ forge test  --root contracts -vvv        # 39 tests
 
 ```bash
 anvil                                                    # terminal 1
-pnpm --filter @truce/arena serve --chain 31337 --auto    # terminal 2 — deploys a world, loops
+pnpm --filter @truce/arena serve --chain 31337           # terminal 2 — waits for an explicit run
 pnpm --filter @truce/web  dev                            # terminal 3 — http://localhost:3000
 ```
 
-Open `localhost:3000`: the console explains the problem, then the **arena** streams real
-transactions in two columns — *Without Truce* vs *With Truce* — with the losers on the left billed in
-full for reverting. Tab between liquidation, DEX arbitrage and cron.
+Open `localhost:3000`: the landing page explains the problem without sending transactions. Open
+**Experiment** and click **Run the experiment** to execute one explicit three-lane sample. Results
+appear in two columns — *Without Truce* vs *With Truce* — with the losers on the left billed in full
+for reverting. On the coordinated side, one claim and its execute should be ✓; the other three
+claims show ✗ because they correctly lost the reservation race. Four claim ✗ marks indicate an
+invalid round, which the arena now rejects instead of reporting as savings.
 
 ### On Monad testnet
 
@@ -222,14 +233,14 @@ forge script contracts/script/Deploy.s.sol:Deploy --root contracts \
 # measure real declared-limit gas with a single funded account
 pnpm --filter @truce/experiment start -- measure --chain 10143 --out reports/monad-measure.json
 
-# run the live arena on testnet (it funds four fresh bot accounts from the deployer)
-pnpm --filter @truce/arena serve --chain 10143 --auto
+# run the live arena on testnet; it waits for an explicit experiment request
+pnpm --filter @truce/arena serve --chain 10143
 ```
 
 ### Arena API (what the frontend consumes)
 
-`GET /state` snapshot · `WS /events` live feed · `POST /round` and `/round/:lane` ·
-`POST /auto/start|stop`. Full contract in [`arena/README.md`](./arena/README.md).
+`GET /state` snapshot · `WS /events` live feed · `POST /round` runs exactly one explicit
+three-lane experiment. Full contract in [`arena/README.md`](./arena/README.md).
 
 ### Run a keeper
 

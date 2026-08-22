@@ -9,12 +9,16 @@ function wsUrl(): string {
   return ARENA_URL.replace(/^http/, "ws") + "/events";
 }
 
-async function post(path: string): Promise<void> {
-  try {
-    await fetch(`${ARENA_URL}${path}`, { method: "POST" });
-  } catch {
-    /* surfaced via connection state */
-  }
+interface CommandResponse {
+  state?: ArenaState;
+  error?: string;
+}
+
+async function post(path: string): Promise<CommandResponse> {
+  const response = await fetch(`${ARENA_URL}${path}`, { method: "POST" });
+  const result = (await response.json().catch(() => ({}))) as CommandResponse;
+  if (!response.ok) throw new Error(result.error ?? `arena request failed (${response.status})`);
+  return result;
 }
 
 export interface ArenaHandle {
@@ -22,9 +26,9 @@ export interface ArenaHandle {
   state: ArenaState | null;
   lastRound: Partial<Record<LaneId, RoundRecord>>;
   runningLane: LaneId | null;
-  fireLane: (lane: LaneId) => void;
+  commandPending: boolean;
+  commandError: string | null;
   fireAll: () => void;
-  setAuto: (on: boolean) => void;
 }
 
 /** Subscribes to the arena WS feed, keeps the latest snapshot + latest round per lane. */
@@ -33,7 +37,10 @@ export function useArena(): ArenaHandle {
   const [state, setState] = useState<ArenaState | null>(null);
   const [lastRound, setLastRound] = useState<Partial<Record<LaneId, RoundRecord>>>({});
   const [runningLane, setRunningLane] = useState<LaneId | null>(null);
+  const [commandPending, setCommandPending] = useState(false);
+  const [commandError, setCommandError] = useState<string | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
+  const commandPendingRef = useRef(false);
 
   useEffect(() => {
     let closed = false;
@@ -53,6 +60,7 @@ export function useArena(): ArenaHandle {
       ws.onopen = () => setConnected(true);
       ws.onclose = () => {
         setConnected(false);
+        setRunningLane(null);
         if (!closed) retry = setTimeout(connect, 2000);
       };
       ws.onerror = () => ws.close();
@@ -65,9 +73,10 @@ export function useArena(): ArenaHandle {
         }
         if (msg.type === "state") {
           setState(msg.state);
-          // Seed latest round per lane from the snapshot on first load.
-          setLastRound((prev) => {
-            const next = { ...prev };
+          setRunningLane(msg.state.runningLane);
+          // Rebuild from the authoritative snapshot so reconnects cannot preserve stale rounds.
+          setLastRound(() => {
+            const next: Partial<Record<LaneId, RoundRecord>> = {};
             for (const r of msg.state.recentRounds) {
               if (!next[r.lane]) next[r.lane] = r;
             }
@@ -78,6 +87,9 @@ export function useArena(): ArenaHandle {
         } else if (msg.type === "round") {
           setRunningLane(null);
           setLastRound((prev) => ({ ...prev, [msg.round.lane]: msg.round }));
+        } else if (msg.type === "error") {
+          setRunningLane((current) => (!msg.lane || current === msg.lane ? null : current));
+          setCommandError(msg.message);
         }
       };
     };
@@ -90,9 +102,21 @@ export function useArena(): ArenaHandle {
     };
   }, []);
 
-  const fireLane = useCallback((lane: LaneId) => void post(`/round/${lane}`), []);
-  const fireAll = useCallback(() => void post("/round"), []);
-  const setAuto = useCallback((on: boolean) => void post(on ? "/auto/start" : "/auto/stop"), []);
+  const fireAll = useCallback(() => {
+    if (commandPendingRef.current) return;
+    commandPendingRef.current = true;
+    setCommandPending(true);
+    setCommandError(null);
+    void post("/round")
+      .then((result) => {
+        if (result.state) setState(result.state);
+      })
+      .catch((err: unknown) => setCommandError((err as Error).message))
+      .finally(() => {
+        commandPendingRef.current = false;
+        setCommandPending(false);
+      });
+  }, []);
 
-  return { connected, state, lastRound, runningLane, fireLane, fireAll, setAuto };
+  return { connected, state, lastRound, runningLane, commandPending, commandError, fireAll };
 }

@@ -46,11 +46,11 @@ function ratioPct(used: bigint, reserved: bigint): number {
 }
 
 export function Experiment({ arena }: { arena: ArenaHandle }) {
-  const { state, connected, fireAll, setAuto } = arena;
+  const { state, connected, commandPending, commandError, fireAll } = arena;
   const rounds = state?.recentRounds ?? [];
   const agg = aggregate(rounds);
-  const auto = state?.auto.running ?? false;
   const hasData = agg.rounds > 0;
+  const busy = state?.busy ?? false;
 
   return (
     <section className="wrap py-14 sm:py-20">
@@ -71,15 +71,13 @@ export function Experiment({ arena }: { arena: ArenaHandle }) {
       <SetupStrip state={state} />
 
       <div className="mt-8 flex flex-wrap items-center gap-3">
-        <button onClick={fireAll} disabled={!connected || auto} className="btn btn-solid">
-          Run the experiment
-        </button>
-        <button onClick={() => setAuto(!auto)} disabled={!connected} className="btn">
-          {auto ? "■ Stop auto-loop" : "▶ Auto-loop"}
+        <button onClick={fireAll} disabled={!connected || busy || commandPending} className="btn btn-solid">
+          {busy || commandPending ? "Experiment running…" : "Run the experiment"}
         </button>
         <span className="font-mono text-[11px] text-faint">
           {connected ? `${agg.rounds} round${agg.rounds === 1 ? "" : "s"} in this sample` : "arena offline"}
         </span>
+        {commandError && <span className="font-mono text-[11px] text-naive">{commandError}</span>}
       </div>
 
       {hasData ? (
@@ -284,7 +282,7 @@ function EmptyState({ connected }: { connected: boolean }) {
       </p>
       {!connected && (
         <code className="mt-3 rounded bg-surface px-2.5 py-1 font-mono text-[11.5px] text-ink">
-          pnpm --filter @truce/arena serve --chain 10143 --auto
+          pnpm --filter @truce/arena serve --chain 10143
         </code>
       )}
     </div>

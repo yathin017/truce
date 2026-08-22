@@ -17,7 +17,7 @@ async function main(): Promise<void> {
 
   const cfg = loadConfig(chainId);
   console.log(`Truce arena — chain ${chainId} (${cfg.rpc})`);
-  console.log(`  budget cap ${formatEther(cfg.budgetCapWei)} MON · auto interval ${cfg.autoIntervalMs}ms`);
+  console.log(`  budget cap ${formatEther(cfg.budgetCapWei)} MON · explicit runs only`);
 
   const arena = await bootstrap(cfg, forceRedeploy);
   console.log(`  coordinator ${arena.world.coordinator}`);
@@ -41,11 +41,9 @@ async function main(): Promise<void> {
     return;
   }
 
-  const auto = process.argv.includes("--auto");
   await startServer(engine, cfg.port);
-  if (auto) {
-    console.log("\nauto-loop starting…");
-    engine.startAuto();
+  if (process.argv.includes("--auto")) {
+    console.warn("\n--auto is disabled: transactions run only after an explicit POST /round request.");
   }
 }
 

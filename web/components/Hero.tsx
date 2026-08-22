@@ -1,8 +1,9 @@
 import type { ArenaState } from "@/lib/types";
 import { chainName, gwei, mon } from "@/lib/format";
 
+const MEASURED_MEAN_SAVINGS_PCT = 32.43;
+
 export function Hero({ state }: { state: ArenaState | null }) {
-  const mean = state?.overall.meanSavingsPct ?? null;
   const rounds = state?.overall.rounds ?? 0;
   const saved =
     state ? BigInt(state.overall.cumulativeNaiveWei) - BigInt(state.overall.cumulativeCoordWei) : 0n;
@@ -33,7 +34,7 @@ export function Hero({ state }: { state: ArenaState | null }) {
           </div>
         </div>
 
-        <HeroNumber mean={mean} />
+        <HeroNumber />
       </div>
     </section>
   );
@@ -48,19 +49,19 @@ function Fact({ label, value }: { label: string; value: string }) {
   );
 }
 
-function HeroNumber({ mean }: { mean: number | null }) {
+function HeroNumber() {
   return (
     <div className="card relative overflow-hidden p-7">
       <div className="eyebrow">Mean gas billed, avoided</div>
       <div className="mt-2 flex items-baseline gap-2">
         <span className="tnum font-mono text-hero font-semibold text-coord">
-          {mean === null ? "—" : mean.toFixed(0)}
+          {MEASURED_MEAN_SAVINGS_PCT.toFixed(2)}
         </span>
         <span className="font-mono text-2xl text-coord/70">%</span>
       </div>
       <p className="mt-3 text-[13.5px] leading-relaxed text-muted">
-        averaged across every use case, every round — the drop in MON actually billed on Monad
-        when keepers coordinate instead of racing.
+        measured across the benchmark use cases — the drop in MON billed on Monad when keepers
+        coordinate instead of racing.
       </p>
       <div className="mt-5 flex items-center gap-4 border-t border-hairline pt-4">
         <MiniBars />
