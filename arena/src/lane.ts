@@ -1,18 +1,18 @@
-import type { Address, Hex } from "viem";
-import { claimGasLimit, PERFORM_GAS_LIMIT } from "@reservoir/shared";
+import type { Abi, Hex } from "viem";
 import {
+  baseExecutorAbi,
   enforcedMockPoolAbi,
   mockArbPoolAbi,
   mockCronJobAbi,
 } from "@reservoir/shared/abis";
 import { reserve, perform } from "@reservoir/keeper/executor";
-import { send, type BotClients } from "./chain.js";
+import { send } from "./chain.js";
+import { estimateDeclared } from "./gas.js";
 import type { Arena, LaneWorld } from "./world.js";
 import { DEMO_USER } from "./world.js";
 import type { LaneId, RoundRecord, SideResult, TxRecord, TxRole } from "./types.js";
 
 const WAD = 10n ** 18n;
-const NAIVE_GAS = PERFORM_GAS_LIMIT; // keepers must declare the success-path limit
 
 export type Spend = (billedWei: bigint) => void;
 
@@ -74,24 +74,39 @@ async function reset(arena: Arena, lane: LaneWorld, spend: Spend): Promise<void>
   }
 }
 
-function naiveCall(lane: LaneWorld): { abi: unknown; fn: string; args: unknown[]; role: TxRole } {
+function naiveCall(lane: LaneWorld): { abi: Abi; fn: string; args: unknown[]; role: TxRole } {
   switch (lane.id) {
     case "liquidation":
-      return { abi: enforcedMockPoolAbi, fn: "liquidate", args: [DEMO_USER], role: "liquidate" };
+      return { abi: enforcedMockPoolAbi as Abi, fn: "liquidate", args: [DEMO_USER], role: "liquidate" };
     case "arb":
-      return { abi: mockArbPoolAbi, fn: "arb", args: [], role: "arb" };
+      return { abi: mockArbPoolAbi as Abi, fn: "arb", args: [], role: "arb" };
     case "cron":
-      return { abi: mockCronJobAbi, fn: "harvest", args: [], role: "harvest" };
+      return { abi: mockCronJobAbi as Abi, fn: "harvest", args: [], role: "harvest" };
   }
 }
 
-/** Naive round: every bot fires the expensive action directly; one lands, the rest revert. */
+/**
+ * Naive round: every bot fires the expensive action directly; one lands, the rest revert.
+ * The declared limit is a live estimate of the success path (all keepers would declare the
+ * same success-sized limit), taken while the opportunity is live — before any bot consumes it.
+ */
 async function runNaive(arena: Arena, lane: LaneWorld, spend: Spend): Promise<TxRecord[]> {
   const { abi, fn, args, role } = naiveCall(lane);
   const explorer = arena.cfg.explorerBase;
+  const first = arena.botClients[0]!;
+
+  const declaredGas = await estimateDeclared(role, arena.cfg.chainId, arena.cfg.gasFactor, {
+    publicClient: first.publicClient,
+    account: first.account,
+    address: lane.naiveTarget,
+    abi,
+    functionName: fn,
+    args,
+  });
+
   const results = await Promise.allSettled(
     arena.botClients.map((bot, i) =>
-      send(bot, lane.naiveTarget, abi as never, fn, args, { gas: NAIVE_GAS }).then((res) => ({ i, res })),
+      send(bot, lane.naiveTarget, abi as never, fn, args, { gas: declaredGas }).then((res) => ({ i, res })),
     ),
   );
   const txs: TxRecord[] = [];
@@ -99,7 +114,7 @@ async function runNaive(arena: Arena, lane: LaneWorld, spend: Spend): Promise<Tx
     if (r.status !== "fulfilled") continue;
     const { i, res } = r.value;
     spend(res.billedWei);
-    const t = txRecord("naive", role, i, NAIVE_GAS, res, explorer);
+    const t = txRecord("naive", role, i, declaredGas, res, explorer);
     t.from = arena.botClients[i]!.account.address;
     txs.push(t);
   }
@@ -109,8 +124,19 @@ async function runNaive(arena: Arena, lane: LaneWorld, spend: Spend): Promise<Tx
 /** Coordinated round: every bot fires the cheap claim; the winner executes. */
 async function runCoordinated(arena: Arena, lane: LaneWorld, spend: Spend): Promise<TxRecord[]> {
   const explorer = arena.cfg.explorerBase;
-  const claimGas = claimGasLimit(arena.cfg.chainId);
   const bond = await bondOf(arena, lane);
+  const first = arena.botClients[0]!;
+
+  // Estimate the cheap claim live (all bots declare the same claim limit).
+  const claimGas = await estimateDeclared("claim", arena.cfg.chainId, arena.cfg.gasFactor, {
+    publicClient: first.publicClient,
+    account: first.account,
+    address: lane.executors[0]!,
+    abi: baseExecutorAbi as Abi,
+    functionName: "reserve",
+    args: [lane.taskId, lane.subject],
+    value: bond,
+  });
 
   const results = await Promise.allSettled(
     arena.botClients.map((bot, i) =>
@@ -139,13 +165,23 @@ async function runCoordinated(arena: Arena, lane: LaneWorld, spend: Spend): Prom
   }
   if (winner < 0) return txs; // nobody won (shouldn't happen after reset)
 
+  // The winner now holds the claim, so `perform` is simulatable — estimate the execution live.
+  const performGas = await estimateDeclared("execute", arena.cfg.chainId, arena.cfg.gasFactor, {
+    publicClient: arena.botClients[winner]!.publicClient,
+    account: arena.botClients[winner]!.account,
+    address: lane.executors[winner]!,
+    abi: baseExecutorAbi as Abi,
+    functionName: "perform",
+    args: [lane.taskId, lane.subject, "0x"],
+  });
+
   const perf = await perform(
     arena.botClients[winner] as never,
     lane.executors[winner]!,
     lane.taskId,
     lane.subject,
     "0x",
-    PERFORM_GAS_LIMIT,
+    performGas,
   );
   spend(perf.gasLimit * perf.receipt.effectiveGasPrice);
   const exec = txRecord(

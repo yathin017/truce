@@ -14,6 +14,7 @@ export interface ArenaConfig {
   budgetCapWei: bigint; // hard stop for total spend this session
   autoIntervalMs: number;
   port: number;
+  gasFactor: number; // headroom multiplier applied to eth_estimateGas
 }
 
 const ANVIL_DEPLOYER = "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80" as Hex;
@@ -75,6 +76,7 @@ export function loadConfig(chainId: number): ArenaConfig {
     budgetCapWei: parseEther(env("ARENA_BUDGET_MON") ?? (isAnvil ? "1000000" : "15")),
     autoIntervalMs: Number(env("ARENA_INTERVAL_MS") ?? 10_000),
     port: Number(env("ARENA_PORT") ?? 8787),
+    gasFactor: Number(env("ARENA_GAS_FACTOR") ?? 1.25),
   };
 }
 

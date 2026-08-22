@@ -5,6 +5,7 @@ import {ICoordinator} from "../interfaces/ICoordinator.sol";
 import {IPriceSource} from "../interfaces/IAavePoolLike.sol";
 import {MockOracle} from "./MockOracle.sol";
 import {ClaimEnforced} from "./ClaimEnforced.sol";
+import {GasSim} from "../lib/GasSim.sol";
 
 /// @notice A demo AMM pool whose spot price can drift off the oracle peg. `arb()` is the
 ///         expensive, once-until-reset action: it pulls the price back to the oracle and
@@ -13,9 +14,14 @@ import {ClaimEnforced} from "./ClaimEnforced.sol";
 /// @dev    The subject for both the eligibility predicate and the claim gate is this pool's
 ///         own address, encoded as bytes32(uint160(address(this))).
 contract MockArbPool is ClaimEnforced, IPriceSource {
+    /// @notice Gas a real arbitrage (flash loan + multi-hop swap) would burn — consumed on
+    ///         the success path so the mock is a faithful, dynamically-estimable stand-in.
+    uint256 public constant WORK_GAS = 300_000;
+
     MockOracle public immutable oracle;
     uint16 public immutable thresholdBps;
     uint256 public price;
+    uint256 private _gasSink;
 
     event PushedOffPeg(uint256 price);
     event Arbed(address indexed caller, uint256 price);
@@ -48,6 +54,7 @@ contract MockArbPool is ClaimEnforced, IPriceSource {
     /// @notice The expensive action, enforced + once-until-reset.
     function arb() external onlyHolder(subject()) {
         require(diverged(), "pegged");
+        _gasSink = GasSim.spin(WORK_GAS, _gasSink);
         price = oracle.price();
         emit Arbed(msg.sender, price);
     }
