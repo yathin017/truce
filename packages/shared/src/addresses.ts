@@ -17,7 +17,9 @@ export interface Deployment {
   chainId: number;
   coordinator: Address;
   mockPool?: Address;
-  mockOracle?: Address;
+  collateralOracle?: Address;
+  poolPriceSource?: Address;
+  refOracle?: Address;
   mockVault?: Address;
   tasks: Record<string, TaskDeployment>;
 }

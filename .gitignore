@@ -47,3 +47,6 @@ lcov.info
 
 # ── Local Claude settings ─────────────────────────────────────
 .claude/
+
+# Local anvil deployment (regenerated each run)
+packages/shared/deployments/31337.json

@@ -2,62 +2,6 @@
 export const iCoordinatorAbi = [
   {
     "type": "function",
-    "name": "activeClaim",
-    "inputs": [
-      {
-        "name": "taskId",
-        "type": "bytes32",
-        "internalType": "bytes32"
-      },
-      {
-        "name": "subject",
-        "type": "bytes32",
-        "internalType": "bytes32"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "",
-        "type": "tuple",
-        "internalType": "struct ICoordinator.Claim",
-        "components": [
-          {
-            "name": "keeper",
-            "type": "address",
-            "internalType": "address"
-          },
-          {
-            "name": "taskId",
-            "type": "bytes32",
-            "internalType": "bytes32"
-          },
-          {
-            "name": "subject",
-            "type": "bytes32",
-            "internalType": "bytes32"
-          },
-          {
-            "name": "expiryBlock",
-            "type": "uint64",
-            "internalType": "uint64"
-          },
-          {
-            "name": "bond",
-            "type": "uint96",
-            "internalType": "uint96"
-          },
-          {
-            "name": "status",
-            "type": "uint8",
-            "internalType": "enum ICoordinator.ClaimStatus"
-          }
-        ]
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
     "name": "claim",
     "inputs": [
       {
@@ -73,7 +17,7 @@ export const iCoordinatorAbi = [
     ],
     "outputs": [
       {
-        "name": "claimId",
+        "name": "subjectKey",
         "type": "bytes32",
         "internalType": "bytes32"
       }
@@ -173,7 +117,12 @@ export const iCoordinatorAbi = [
     "name": "getClaim",
     "inputs": [
       {
-        "name": "claimId",
+        "name": "taskId",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      },
+      {
+        "name": "subject",
         "type": "bytes32",
         "internalType": "bytes32"
       }
@@ -190,24 +139,9 @@ export const iCoordinatorAbi = [
             "internalType": "address"
           },
           {
-            "name": "taskId",
-            "type": "bytes32",
-            "internalType": "bytes32"
-          },
-          {
-            "name": "subject",
-            "type": "bytes32",
-            "internalType": "bytes32"
-          },
-          {
             "name": "expiryBlock",
             "type": "uint64",
             "internalType": "uint64"
-          },
-          {
-            "name": "bond",
-            "type": "uint96",
-            "internalType": "uint96"
           },
           {
             "name": "status",
@@ -367,7 +301,12 @@ export const iCoordinatorAbi = [
     "name": "resolve",
     "inputs": [
       {
-        "name": "claimId",
+        "name": "taskId",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      },
+      {
+        "name": "subject",
         "type": "bytes32",
         "internalType": "bytes32"
       }
@@ -439,12 +378,6 @@ export const iCoordinatorAbi = [
     "name": "Claimed",
     "inputs": [
       {
-        "name": "claimId",
-        "type": "bytes32",
-        "indexed": true,
-        "internalType": "bytes32"
-      },
-      {
         "name": "taskId",
         "type": "bytes32",
         "indexed": true,
@@ -459,7 +392,7 @@ export const iCoordinatorAbi = [
       {
         "name": "keeper",
         "type": "address",
-        "indexed": false,
+        "indexed": true,
         "internalType": "address"
       },
       {
@@ -482,12 +415,6 @@ export const iCoordinatorAbi = [
     "name": "Consumed",
     "inputs": [
       {
-        "name": "claimId",
-        "type": "bytes32",
-        "indexed": true,
-        "internalType": "bytes32"
-      },
-      {
         "name": "taskId",
         "type": "bytes32",
         "indexed": true,
@@ -502,7 +429,7 @@ export const iCoordinatorAbi = [
       {
         "name": "keeper",
         "type": "address",
-        "indexed": false,
+        "indexed": true,
         "internalType": "address"
       }
     ],
@@ -512,12 +439,6 @@ export const iCoordinatorAbi = [
     "type": "event",
     "name": "Resolved",
     "inputs": [
-      {
-        "name": "claimId",
-        "type": "bytes32",
-        "indexed": true,
-        "internalType": "bytes32"
-      },
       {
         "name": "taskId",
         "type": "bytes32",
@@ -533,7 +454,7 @@ export const iCoordinatorAbi = [
       {
         "name": "resolver",
         "type": "address",
-        "indexed": false,
+        "indexed": true,
         "internalType": "address"
       },
       {
