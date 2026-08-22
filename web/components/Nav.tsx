@@ -1,42 +1,53 @@
+import Link from "next/link";
 import type { ArenaState } from "@/lib/types";
 import { chainName } from "@/lib/format";
 import { StatusDot } from "./StatusDot";
 
-export function Nav({ connected, state }: { connected: boolean; state: ArenaState | null }) {
-  const explorer =
-    state?.explorerBase && state.coordinator
-      ? `${state.explorerBase}/address/${state.coordinator}`
-      : undefined;
-
+export function Nav({
+  connected,
+  state,
+  active,
+}: {
+  connected: boolean;
+  state: ArenaState | null;
+  active?: "home" | "experiment";
+}) {
   return (
     <header className="sticky top-0 z-40 border-b border-hairline bg-paper/85 backdrop-blur-md">
       <div className="wrap flex h-14 items-center justify-between">
-        <div className="flex items-center gap-3">
+        <Link href="/" className="flex items-center gap-3">
           <Mark />
           <span className="font-semibold tracking-tight">Truce</span>
           <span className="hidden text-muted sm:inline">·</span>
           <span className="hidden font-mono text-[11px] uppercase tracking-[0.14em] text-muted sm:inline">
             keeper coordination for Monad
           </span>
-        </div>
-        <div className="flex items-center gap-5">
+        </Link>
+        <div className="flex items-center gap-4 sm:gap-6">
+          <nav className="flex items-center gap-4">
+            <NavLink href="/" label="Console" on={active === "home"} />
+            <NavLink href="/experiment" label="Experiment" on={active === "experiment"} />
+          </nav>
           <span className="hidden font-mono text-[11px] uppercase tracking-[0.14em] text-muted md:inline">
             {state ? chainName(state.chainId) : "—"}
           </span>
           <StatusDot on={connected} label={connected ? "live" : "offline"} />
-          {explorer && (
-            <a
-              href={explorer}
-              target="_blank"
-              rel="noreferrer"
-              className="hidden font-mono text-[11px] uppercase tracking-[0.14em] text-ink underline decoration-hairline underline-offset-4 hover:decoration-ink sm:inline"
-            >
-              coordinator ↗
-            </a>
-          )}
         </div>
       </div>
     </header>
+  );
+}
+
+function NavLink({ href, label, on }: { href: string; label: string; on: boolean }) {
+  return (
+    <Link
+      href={href}
+      className={`font-mono text-[11px] uppercase tracking-[0.14em] transition-colors ${
+        on ? "text-ink" : "text-muted hover:text-ink"
+      }`}
+    >
+      {label}
+    </Link>
   );
 }
 
