@@ -1,6 +1,6 @@
 import { parseEther, type Chain, type Hex } from "viem";
 import { privateKeyToAccount, mnemonicToAccount } from "viem/accounts";
-import { anvil, monadTestnet } from "@reservoir/shared";
+import { anvil, monadTestnet } from "@truce/shared";
 import { loadOrCreateBotKeys } from "./keys.js";
 
 export interface ArenaConfig {

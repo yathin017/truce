@@ -1,5 +1,5 @@
 import type { Abi, Account, Address, PublicClient } from "viem";
-import { claimGasLimit } from "@reservoir/shared";
+import { claimGasLimit } from "@truce/shared";
 import type { TxRole } from "./types.js";
 
 /**

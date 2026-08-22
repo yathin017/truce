@@ -13,7 +13,7 @@ export function Nav({ connected, state }: { connected: boolean; state: ArenaStat
       <div className="wrap flex h-14 items-center justify-between">
         <div className="flex items-center gap-3">
           <Mark />
-          <span className="font-semibold tracking-tight">Reservoir</span>
+          <span className="font-semibold tracking-tight">Truce</span>
           <span className="hidden text-muted sm:inline">·</span>
           <span className="hidden font-mono text-[11px] uppercase tracking-[0.14em] text-muted sm:inline">
             keeper coordination for Monad

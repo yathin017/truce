@@ -6,7 +6,7 @@ export function LaneColumns({ round, running }: { round: RoundRecord | undefined
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
       <Column
-        title="Without Reservoir"
+        title="Without Truce"
         subtitle="every bot fires the full-price execution"
         tone="naive"
         round={round}
@@ -14,7 +14,7 @@ export function LaneColumns({ round, running }: { round: RoundRecord | undefined
         running={running}
       />
       <Column
-        title="With Reservoir"
+        title="With Truce"
         subtitle="every bot fires a cheap claim; one executes"
         tone="coord"
         round={round}

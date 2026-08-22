@@ -24,9 +24,9 @@ export function BurnMeter({ state }: { state: ArenaState | null }) {
           </div>
 
           <div className="card p-6">
-            <Bar label="Without Reservoir" wei={naive} widthPct={100} tone="naive" />
+            <Bar label="Without Truce" wei={naive} widthPct={100} tone="naive" />
             <div className="h-4" />
-            <Bar label="With Reservoir" wei={coord} widthPct={coordW} tone="coord" />
+            <Bar label="With Truce" wei={coord} widthPct={coordW} tone="coord" />
             <div className="mt-6 flex items-baseline justify-between border-t border-hairline pt-4">
               <span className="eyebrow">Kept out of the fire</span>
               <span className="tnum font-mono text-2xl font-semibold text-coord">

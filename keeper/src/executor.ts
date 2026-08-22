@@ -1,5 +1,5 @@
 import type { Address, Hex, TransactionReceipt } from "viem";
-import { baseExecutorAbi } from "@reservoir/shared/abis";
+import { baseExecutorAbi } from "@truce/shared/abis";
 import type { Clients } from "./clients.js";
 import { loadArtifact } from "./artifacts.js";
 

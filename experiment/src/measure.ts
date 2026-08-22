@@ -7,9 +7,9 @@ import {
   claimGasLimit,
   PERFORM_GAS_LIMIT,
   type TxGas,
-} from "@reservoir/shared";
-import { coordinatorAbi } from "@reservoir/shared/abis";
-import { deployExecutor, reserve, perform } from "@reservoir/keeper/executor";
+} from "@truce/shared";
+import { coordinatorAbi } from "@truce/shared/abis";
+import { deployExecutor, reserve, perform } from "@truce/keeper/executor";
 import { deployFixtures, resolveKeys, chainFor } from "./fixtures.js";
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -93,7 +93,7 @@ export async function runMeasure(rpc: string, chainId: number): Promise<Measurem
     modeledDeclaredReductionPct: reductionPct(naiveDeclared, coordDeclared),
   };
 
-  console.log("\n══ Reservoir gas measurement ═════════════════════════════════════\n");
+  console.log("\n══ Truce gas measurement ═════════════════════════════════════\n");
   console.log(`chain            ${chainId}`);
   console.log(`gas price        ${formatMon(price)} / gas`);
   console.log(`claim            used ${m.claimGasUsed} (declared ${m.claimGasDeclared})`);

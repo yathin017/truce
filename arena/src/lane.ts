@@ -4,8 +4,8 @@ import {
   enforcedMockPoolAbi,
   mockArbPoolAbi,
   mockCronJobAbi,
-} from "@reservoir/shared/abis";
-import { reserve, perform } from "@reservoir/keeper/executor";
+} from "@truce/shared/abis";
+import { reserve, perform } from "@truce/keeper/executor";
 import { send } from "./chain.js";
 import { estimateRaw, perBotLimits, declaredFromRaw, botFactor, floorFor } from "./gas.js";
 import type { Arena, LaneWorld } from "./world.js";
@@ -207,7 +207,7 @@ async function runCoordinated(arena: Arena, lane: LaneWorld, spend: Spend): Prom
 }
 
 async function bondOf(arena: Arena, lane: LaneWorld): Promise<bigint> {
-  const { coordinatorAbi } = await import("@reservoir/shared/abis");
+  const { coordinatorAbi } = await import("@truce/shared/abis");
   const task = (await arena.deployer.publicClient.readContract({
     address: arena.world.coordinator,
     abi: coordinatorAbi as never,

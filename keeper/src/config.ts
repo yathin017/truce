@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { parse as parseYaml } from "yaml";
 import { getAddress, isHex, type Address, type Hex } from "viem";
-import { loadDeployment } from "@reservoir/shared";
+import { loadDeployment } from "@truce/shared";
 import type { KeeperConfig, SafetyLimits, TaskConfig } from "./types.js";
 
 const DEFAULT_SAFETY: SafetyLimits = {

@@ -3,7 +3,7 @@
  * `packages/shared/src/abis/<Name>.ts` as `as const` exports, and regenerate
  * the barrel `abis/index.ts`. Run after `forge build`.
  *
- * Usage: pnpm --filter @reservoir/shared sync-abis
+ * Usage: pnpm --filter @truce/shared sync-abis
  */
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";

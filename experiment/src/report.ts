@@ -5,7 +5,7 @@ import {
   usefulWorkRatio,
   reductionPct,
   formatMon,
-} from "@reservoir/shared";
+} from "@truce/shared";
 import type { RoundResult } from "./rounds.js";
 
 export interface RoundMetrics {
@@ -59,7 +59,7 @@ export function printReport(rep: ExperimentReport): void {
   const nReserved = BigInt(rep.naive.blockGasReserved);
   const cReserved = BigInt(rep.coordinated.blockGasReserved);
 
-  console.log("\n══ Reservoir experiment ══════════════════════════════════════════\n");
+  console.log("\n══ Truce experiment ══════════════════════════════════════════\n");
 
   console.log("MON CHARGED  (declared-limit basis — what Monad actually bills)");
   console.log(`  Naive        ${bar(1)}  ${formatMon(nDeclared)}`);

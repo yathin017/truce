@@ -1,5 +1,5 @@
 import { getAddress, type Address, type Hex } from "viem";
-import { formatMon } from "@reservoir/shared";
+import { formatMon } from "@truce/shared";
 import type { Clients } from "./clients.js";
 import type { KeeperConfig, TaskConfig } from "./types.js";
 import { CoordinatorReader, subjectOf, ZERO_ADDRESS } from "./coordinator.js";

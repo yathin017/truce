@@ -46,7 +46,7 @@ export function Footer({ state }: { state: ArenaState | null }) {
               it, participating keepers still save against each other.
             </Note>
             <Note title="Complementary to Chainlink SVR">
-              SVR recaptures oracle value from the winning liquidation. Reservoir eliminates the
+              SVR recaptures oracle value from the winning liquidation. Truce eliminates the
               wasted gas from the losing attempts. Different problem, same stack.
             </Note>
             <Note title="Demo market">
@@ -58,7 +58,7 @@ export function Footer({ state }: { state: ArenaState | null }) {
 
         <div className="mt-16 flex flex-col items-start justify-between gap-3 border-t border-hairline pt-6 sm:flex-row sm:items-center">
           <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-faint">
-            Reservoir · built for the Monad hackathon
+            Truce · built for the Monad hackathon
           </span>
           <span className="font-mono text-[11px] text-faint">stake your claim before you spend your gas</span>
         </div>

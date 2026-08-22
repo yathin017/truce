@@ -1,4 +1,4 @@
-// Mirrors the @reservoir/arena API shapes (see arena/README.md).
+// Mirrors the @truce/arena API shapes (see arena/README.md).
 
 export type LaneId = "liquidation" | "arb" | "cron";
 export type Side = "naive" | "coordinated";

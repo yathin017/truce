@@ -29,7 +29,7 @@ export function HowItWorks() {
             />
             <Step
               n="03"
-              title="Reservoir adds a cheap reservation"
+              title="Truce adds a cheap reservation"
               body="Bots first compete with a small bonded claim. The one winner then runs the expensive execution; the losers paid only for the claim and stand down. One contract does this for any task — it just checks that the opportunity is still live."
             />
           </ol>
@@ -58,7 +58,7 @@ function FlowDiagram() {
     <div className="card p-6 sm:p-8">
       <Flow
         tone="naive"
-        label="Without Reservoir"
+        label="Without Truce"
         note="four full-price attempts"
         chips={["500k", "500k", "500k", "500k"]}
         result="1 executes · 3 revert — all billed 500k"
@@ -66,7 +66,7 @@ function FlowDiagram() {
       <div className="my-6 rule" />
       <Flow
         tone="coord"
-        label="With Reservoir"
+        label="With Truce"
         note="four cheap claims, one execution"
         chips={["claim", "claim", "claim", "claim"]}
         extra="500k"

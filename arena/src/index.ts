@@ -16,7 +16,7 @@ async function main(): Promise<void> {
   const forceRedeploy = process.argv.includes("--redeploy");
 
   const cfg = loadConfig(chainId);
-  console.log(`Reservoir arena — chain ${chainId} (${cfg.rpc})`);
+  console.log(`Truce arena — chain ${chainId} (${cfg.rpc})`);
   console.log(`  budget cap ${formatEther(cfg.budgetCapWei)} MON · auto interval ${cfg.autoIntervalMs}ms`);
 
   const arena = await bootstrap(cfg, forceRedeploy);

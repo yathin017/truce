@@ -23,7 +23,7 @@ export function Hero({ state }: { state: ArenaState | null }) {
           <p className="mt-6 max-w-xl text-pretty text-[17px] leading-relaxed text-ink-2">
             On Monad you pay for the gas limit you <em className="not-italic text-ink">declare</em>,
             not the gas you use. So when four bots race one liquidation, the three that revert are
-            billed the full amount anyway. Reservoir moves the race onto a cheap reservation —
+            billed the full amount anyway. Truce moves the race onto a cheap reservation —
             everyone competes for pennies, one winner spends the rest.
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-x-8 gap-y-3">

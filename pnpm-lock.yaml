@@ -20,10 +20,10 @@ importers:
       '@fastify/websocket':
         specifier: ^11.0.1
         version: 11.3.0
-      '@reservoir/keeper':
+      '@truce/keeper':
         specifier: workspace:*
         version: link:../keeper
-      '@reservoir/shared':
+      '@truce/shared':
         specifier: workspace:*
         version: link:../packages/shared
       dotenv:
@@ -54,10 +54,10 @@ importers:
 
   experiment:
     dependencies:
-      '@reservoir/keeper':
+      '@truce/keeper':
         specifier: workspace:*
         version: link:../keeper
-      '@reservoir/shared':
+      '@truce/shared':
         specifier: workspace:*
         version: link:../packages/shared
       dotenv:
@@ -79,7 +79,7 @@ importers:
 
   keeper:
     dependencies:
-      '@reservoir/shared':
+      '@truce/shared':
         specifier: workspace:*
         version: link:../packages/shared
       dotenv:

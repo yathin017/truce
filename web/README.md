@@ -1,6 +1,6 @@
 # @reservoir/web
 
-The Reservoir console — a Next.js frontend that explains the Monad gas-billing problem and shows
+The Truce console — a Next.js frontend that explains the Monad gas-billing problem and shows
 the [arena](../arena) running live: two side-by-side columns, real transactions, clickable
 explorer links, and the mean gas saved.
 

@@ -11,7 +11,7 @@ export function OfflineBanner() {
           start the engine, then this page goes live:
         </span>
         <code className="rounded bg-surface px-2 py-0.5 font-mono text-[11.5px] text-ink">
-          pnpm --filter @reservoir/arena serve --chain 10143
+          pnpm --filter @truce/arena serve --chain 10143
         </code>
         <span className="font-mono text-[11px] text-muted">expecting {ARENA_URL}</span>
       </div>
