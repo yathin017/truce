@@ -8,11 +8,11 @@ import {
   type Hex,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-import { anvil } from "@reservoir/shared";
+import { anvil, monadTestnet } from "@reservoir/shared";
 import { loadArtifact } from "@reservoir/keeper/artifacts";
 
 /** Anvil well-known keys: account 0 deploys/seeds, accounts 1-4 are the racing keepers. */
-export const KEYS = {
+const ANVIL_KEYS = {
   deployer: "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",
   keepers: [
     "0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d",
@@ -22,6 +22,31 @@ export const KEYS = {
   ],
 } as const;
 
+/**
+ * Resolve deployer + keeper keys. On anvil (31337) the well-known keys are used by
+ * default. On any other chain (e.g. Monad testnet) they must be supplied via env —
+ * DEPLOYER_PRIVATE_KEY and KEEPER_PRIVATE_KEY_1..4 — since real funds are required.
+ */
+export function resolveKeys(chainId: number): { deployer: Hex; keepers: Hex[] } {
+  if (chainId === anvil.id) return { deployer: ANVIL_KEYS.deployer as Hex, keepers: [...ANVIL_KEYS.keepers] as Hex[] };
+  const env = (name: string): Hex => {
+    const v = process.env[name];
+    if (!v) throw new Error(`chain ${chainId} requires ${name} in the environment`);
+    return (v.startsWith("0x") ? v : `0x${v}`) as Hex;
+  };
+  return {
+    deployer: env("DEPLOYER_PRIVATE_KEY"),
+    keepers: [1, 2, 3, 4].map((i) => env(`KEEPER_PRIVATE_KEY_${i}`)),
+  };
+}
+
+/** Back-compat for the local anvil race demo. */
+export const KEYS = ANVIL_KEYS;
+
+export function chainFor(chainId: number): Chain {
+  return chainId === monadTestnet.id ? monadTestnet : anvil;
+}
+
 export const DEMO_USER: Address = "0x00000000000000000000000000000000000A11cE";
 const WAD = 10n ** 18n;
 
@@ -30,7 +55,9 @@ const BOND = 10_000_000_000_000_000n; // 0.01 MON
 
 export interface Fixtures {
   chain: Chain;
+  chainId: number;
   rpc: string;
+  keeperKeys: Hex[];
   publicClient: ReturnType<typeof createPublicClient>;
   deployer: ReturnType<typeof createWalletClient>;
   coordinator: Address;
@@ -55,11 +82,12 @@ async function deploy(
 }
 
 /** Deploy a fresh, reproducible world: coordinator + two pools (voluntary + enforced). */
-export async function deployFixtures(rpc: string): Promise<Fixtures> {
-  const chain = anvil;
+export async function deployFixtures(rpc: string, chainId: number = anvil.id): Promise<Fixtures> {
+  const chain = chainFor(chainId);
+  const keys = resolveKeys(chainId);
   const transport = http(rpc);
   const publicClient = createPublicClient({ chain, transport });
-  const account = privateKeyToAccount(KEYS.deployer);
+  const account = privateKeyToAccount(keys.deployer);
   const deployer = createWalletClient({ account, chain, transport });
 
   const coordinator = await deploy(deployer, publicClient, "Coordinator", []);
@@ -88,7 +116,9 @@ export async function deployFixtures(rpc: string): Promise<Fixtures> {
 
   return {
     chain,
+    chainId,
     rpc,
+    keeperKeys: keys.keepers,
     publicClient,
     deployer,
     coordinator,
