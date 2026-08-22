@@ -1,0 +1,7 @@
+{
+  "name": "@reservoir/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Reservoir console — Next.js. Phase B; scaffolded in a later pass."
+}

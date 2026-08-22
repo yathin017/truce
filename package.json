@@ -1,0 +1,26 @@
+{
+  "name": "reservoir",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Reservoir — a gas-aware keeper coordination layer for Monad. Stake your claim before you spend your gas.",
+  "type": "module",
+  "packageManager": "pnpm@10.30.3",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "typecheck": "pnpm -r --if-present typecheck",
+    "build": "pnpm -r --if-present build",
+    "lint": "pnpm -r --if-present lint",
+    "sync-abis": "pnpm --filter @reservoir/shared sync-abis",
+    "contracts:build": "forge build --root contracts",
+    "contracts:test": "forge test --root contracts",
+    "contracts:fmt": "forge fmt --check --root contracts"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.3"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["esbuild"]
+  }
+}
