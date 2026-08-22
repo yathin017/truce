@@ -1,7 +1,7 @@
 "use client";
 
 import type { ArenaHandle } from "@/lib/arena";
-import type { ArenaState, RoundRecord } from "@/lib/types";
+import { LANE_META, LANE_ORDER, type ArenaState, type RoundRecord } from "@/lib/types";
 import { mon, gwei, chainName } from "@/lib/format";
 
 interface Agg {
@@ -51,6 +51,17 @@ export function Experiment({ arena }: { arena: ArenaHandle }) {
   const agg = aggregate(rounds);
   const hasData = agg.rounds > 0;
   const busy = state?.busy ?? false;
+  const running = busy || commandPending;
+  const runningLane = state?.runningLane ?? null;
+  const sampleStatus = !connected
+    ? "arena offline"
+    : running
+      ? runningLane
+        ? `Running ${LANE_ORDER.indexOf(runningLane) + 1}/${LANE_ORDER.length} · ${LANE_META[runningLane].short}`
+        : "Preparing experiment…"
+      : agg.rounds > 0
+        ? `${agg.rounds} completed lane result${agg.rounds === 1 ? "" : "s"}`
+        : "Ready · no transactions sent";
 
   return (
     <section className="wrap py-14 sm:py-20">
@@ -72,11 +83,9 @@ export function Experiment({ arena }: { arena: ArenaHandle }) {
 
       <div className="mt-8 flex flex-wrap items-center gap-3">
         <button onClick={fireAll} disabled={!connected || busy || commandPending} className="btn btn-solid">
-          {busy || commandPending ? "Experiment running…" : "Run the experiment"}
+          {running ? "Experiment running…" : "Run the experiment"}
         </button>
-        <span className="font-mono text-[11px] text-faint">
-          {connected ? `${agg.rounds} round${agg.rounds === 1 ? "" : "s"} in this sample` : "arena offline"}
-        </span>
+        <span className="font-mono text-[11px] text-faint" aria-live="polite">{sampleStatus}</span>
         {commandError && <span className="font-mono text-[11px] text-naive">{commandError}</span>}
       </div>
 
@@ -106,7 +115,7 @@ export function Experiment({ arena }: { arena: ArenaHandle }) {
           />
         </div>
       ) : (
-        <EmptyState connected={connected} />
+        <EmptyState connected={connected} running={running} />
       )}
 
       <Counterfactual />
@@ -274,11 +283,15 @@ function PerLane({ state }: { state: ArenaState | null }) {
   );
 }
 
-function EmptyState({ connected }: { connected: boolean }) {
+function EmptyState({ connected, running }: { connected: boolean; running: boolean }) {
   return (
     <div className="mt-10 grid place-items-center rounded-xl border border-dashed border-hairline py-16 text-center">
       <p className="font-mono text-[13px] text-muted">
-        {connected ? "Run the experiment to measure the difference." : "Start the arena to run the experiment."}
+        {connected
+          ? running
+            ? "Transactions are running. Results appear as each lane completes."
+            : "Run the experiment to measure the difference."
+          : "Start the arena to run the experiment."}
       </p>
       {!connected && (
         <code className="mt-3 rounded bg-surface px-2.5 py-1 font-mono text-[11.5px] text-ink">

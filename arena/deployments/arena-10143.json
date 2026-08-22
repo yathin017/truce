@@ -2,10 +2,10 @@
   "chainId": 10143,
   "coordinator": "0xb26381d4a04d85f06d06d8f66548ddd502c323e4",
   "bots": [
-    "0xaF79f8C6236C4eFe9D64B823A3CAeEe30565D200",
-    "0x05e12bfaCf5Cda905D218d15602ACB827B0d41aB",
-    "0xDb341b3ad1FCbfd195A4632Db369ea4507bD9156",
-    "0x139Cf69cfA3D2d46f9fD326C0f8cD722DD0aDe79"
+    "0x23963D7DFBA1bb1cFd3bab990E00B8111C734323",
+    "0x288DC3Ac729e3059601A8197f18bbB9fe33b0d63",
+    "0x819E4A1DE918bbE78f20cF27CdFd03430E1d6828",
+    "0x2A86B8a394cac6db0Ece190D4Fb5234b3079d690"
   ],
   "lanes": {
     "liquidation": {
@@ -16,10 +16,10 @@
       "naiveTarget": "0xf3951119d5bce0db6943aa54f7008f6b03833408",
       "coordTarget": "0xac06ac357611a31374fa64547a16f8bf39f683f8",
       "executors": [
-        "0x3cda17fa87d081fc0c008bb14ccd8ee76cbf37e6",
-        "0xf6465fe3af4fc8b3e918259ef39583fdc8a9eed0",
-        "0x01b9d9d6d092ee35cafacf1431261edd8f816db5",
-        "0x22f0e18932a68eee3c370e1b5268bebdca87d370"
+        "0xf3e62f36a0d8df4aae1d210b9e4ea1989892ddef",
+        "0x6cb658c7a89290d191e6becfdef3a8efbd6b5af6",
+        "0xb80d0ff859c0838e3d823fa38dedcdf08147855f",
+        "0x9945bbb26fb5cad8e67678340da7aba37e7c02f2"
       ]
     },
     "arb": {
@@ -30,10 +30,10 @@
       "naiveTarget": "0x2301a1a79a4963a33302bbd06e93953f186228ed",
       "coordTarget": "0xcdcc2024d7770225354bc6524d84a261c298e462",
       "executors": [
-        "0xebe923f3f4f64cb96151d9c06cc144d91619ffa0",
-        "0x157ffc992c8d32d76c18e8448d5a2e0434290c76",
-        "0x8397b126c27691cf1761b6a32d917aa73c0cfdc9",
-        "0x59c75bd4043a986d3fc9e222beec5cf110d62374"
+        "0xb3be3d298a6c9a49e06fd71c1769ea160cb5636a",
+        "0xdc233223025acb573a8c4971a852ae8ddb664fde",
+        "0xa57ba881b6f734253e8835f459501af16839654e",
+        "0x3568c3e62f47d9473a4be27e22ed5c5dfdcd99c8"
       ]
     },
     "cron": {
@@ -44,10 +44,10 @@
       "naiveTarget": "0xf0d3bd99b4434fcfe7f3fd29dcc811e5e697c64f",
       "coordTarget": "0xeb819ad76070fdaa54de37df5b3d5b17088e1b0b",
       "executors": [
-        "0x0973557eb67f863947863c15e64b6508ae029156",
-        "0x66ec37f342d8a36552a9a4173ce8565c2c333c58",
-        "0x98521d66bd390d5ca96f0a888be2632a47469019",
-        "0x637b810413a5dfce795d050f6869ca6b8d63e163"
+        "0x08acc1c8bfef29fb12e37902194b9a2b289c8cd3",
+        "0x17c308e4b924843393528f340c3b2aaf458565d2",
+        "0x4666dfa8c331f3170c0a29db027cad1ce4ed9d97",
+        "0xe98b0c4532e14ec943008797cf0908f7e12eee80"
       ]
     }
   }
