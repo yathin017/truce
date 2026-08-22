@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@reservoir/shared": "workspace:*",
+    "@reservoir/keeper": "workspace:*",
     "dotenv": "^16.4.7",
     "viem": "^2.21.55"
   },
